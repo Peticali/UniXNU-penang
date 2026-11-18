@@ -1,8 +1,8 @@
 diff --git a/fixtures/fileset-24A446-symbols.json b/fixtures/fileset-24A446-symbols.json
-index bcc5ee9..b27c209 100644
+index bcc5ee9..cba4759 100644
 --- a/fixtures/fileset-24A446-symbols.json
 +++ b/fixtures/fileset-24A446-symbols.json
-@@ -1095,6 +1095,496 @@
+@@ -1095,6 +1095,629 @@
        "original_sha256": "461f0cd8c82fda303d244bd2e7d866dfa0a3a0e88e4e29eeaa32547988cb1a92",
        "native_symbol": "_ml_io_read8",
        "evidence": "Loads and returns one byte at x0. Directly precedes ml_io_read16, ml_io_read32 and ml_io_read64, which have the same shape for their widths. Source osfmk/arm64/machine_routines.c ml_io_read8; the native development build adds its timing checks around the same read."
@@ -496,10 +496,143 @@ index bcc5ee9..b27c209 100644
 +      "original_sha256": "d462d7d9003d344797632553e92e2768133f97bc16a6c93e0fae9e1f8a99c4c0",
 +      "native_symbol": "_proc_set_syscall_filter_index",
 +      "evidence": "Only for which == 2 (SYSCALL_MASK_KOBJ): looks up num in the 1031-entry (MAX_MIG_ENTRIES) MIG hash table of 24-byte entries (num mod 1031, linear probing) and stores the index, else EINVAL/ENOENT; the original inlines ipc_kobject_set_kobjidx. Lies between proc_set_syscall_filter_callbacks and proc_set_sandbox_info_callbacks as in bsd/kern/kern_proc.c. Imported by sandbox, which called it as (2, 200, ...) during its policy initialization (panic on the device)."
++    },
++    {
++      "original": "0xfffffe000b3d811c",
++      "original_size": 16,
++      "original_sha256": "36c614153927e889ba546ff5d63d9e12d41556108c9ba5f965a537c849f64fef",
++      "native_symbol": "__ZN7OSArrayD2Ev",
++      "evidence": "Base-object destructor (D2) of an OSDefineMetaClassAndStructors class: iOS 27 poisons the vtable pointer (bti; mov x8, #-1; str x8, [x0]; ret), identical for every such class, so only its position names it: between __ZN7OSArrayC1EPK11OSMetaClass and __ZN7OSArraydlEPvm, where the native kernel has this class's D2. The native D2 chains to the superclass destructor instead of poisoning; a kext calling it as its superclass destructor gets the same effect on a dying object. Source: libkern/libkern/c++/OSMetaClass.h. Proposed by UniXNU-penang (AppleARMPlatform called IOService's during matching)."
++    },
++    {
++      "original": "0xfffffe000b409260",
++      "original_size": 16,
++      "original_sha256": "36c614153927e889ba546ff5d63d9e12d41556108c9ba5f965a537c849f64fef",
++      "native_symbol": "__ZN8OSNumberD2Ev",
++      "evidence": "Base-object destructor (D2) of an OSDefineMetaClassAndStructors class: iOS 27 poisons the vtable pointer (bti; mov x8, #-1; str x8, [x0]; ret), identical for every such class, so only its position names it: between __ZN8OSNumberC1EPK11OSMetaClass and __ZN8OSNumberdlEPvm, where the native kernel has this class's D2. The native D2 chains to the superclass destructor instead of poisoning; a kext calling it as its superclass destructor gets the same effect on a dying object. Source: libkern/libkern/c++/OSMetaClass.h. Proposed by UniXNU-penang (AppleARMPlatform called IOService's during matching)."
++    },
++    {
++      "original": "0xfffffe000b46c2d0",
++      "original_size": 16,
++      "original_sha256": "36c614153927e889ba546ff5d63d9e12d41556108c9ba5f965a537c849f64fef",
++      "native_symbol": "__ZN9IOServiceD2Ev",
++      "evidence": "Base-object destructor (D2) of an OSDefineMetaClassAndStructors class: iOS 27 poisons the vtable pointer (bti; mov x8, #-1; str x8, [x0]; ret), identical for every such class, so only its position names it: between __ZN9IOServiceC1EPK11OSMetaClass and __ZN9IOServicedlEPvm, where the native kernel has this class's D2. The native D2 chains to the superclass destructor instead of poisoning; a kext calling it as its superclass destructor gets the same effect on a dying object. Source: libkern/libkern/c++/OSMetaClass.h. Proposed by UniXNU-penang (AppleARMPlatform called IOService's during matching)."
++    },
++    {
++      "original": "0xfffffe000b49fbf4",
++      "original_size": 16,
++      "original_sha256": "36c614153927e889ba546ff5d63d9e12d41556108c9ba5f965a537c849f64fef",
++      "native_symbol": "__ZN13IOCommandGateD2Ev",
++      "evidence": "Base-object destructor (D2) of an OSDefineMetaClassAndStructors class: iOS 27 poisons the vtable pointer (bti; mov x8, #-1; str x8, [x0]; ret), identical for every such class, so only its position names it: between __ZN13IOCommandGateC1EPK11OSMetaClass and __ZN13IOCommandGatedlEPvm, where the native kernel has this class's D2. The native D2 chains to the superclass destructor instead of poisoning; a kext calling it as its superclass destructor gets the same effect on a dying object. Source: libkern/libkern/c++/OSMetaClass.h. Proposed by UniXNU-penang (AppleARMPlatform called IOService's during matching)."
++    },
++    {
++      "original": "0xfffffe000b4a0580",
++      "original_size": 16,
++      "original_sha256": "36c614153927e889ba546ff5d63d9e12d41556108c9ba5f965a537c849f64fef",
++      "native_symbol": "__ZN9IOCommandD2Ev",
++      "evidence": "Base-object destructor (D2) of an OSDefineMetaClassAndStructors class: iOS 27 poisons the vtable pointer (bti; mov x8, #-1; str x8, [x0]; ret), identical for every such class, so only its position names it: between __ZN9IOCommandC1EPK11OSMetaClass and __ZN9IOCommanddlEPvm, where the native kernel has this class's D2. The native D2 chains to the superclass destructor instead of poisoning; a kext calling it as its superclass destructor gets the same effect on a dying object. Source: libkern/libkern/c++/OSMetaClass.h. Proposed by UniXNU-penang (AppleARMPlatform called IOService's during matching)."
++    },
++    {
++      "original": "0xfffffe000b4a4b34",
++      "original_size": 16,
++      "original_sha256": "36c614153927e889ba546ff5d63d9e12d41556108c9ba5f965a537c849f64fef",
++      "native_symbol": "__ZN18IOTimerEventSourceD2Ev",
++      "evidence": "Base-object destructor (D2) of an OSDefineMetaClassAndStructors class: iOS 27 poisons the vtable pointer (bti; mov x8, #-1; str x8, [x0]; ret), identical for every such class, so only its position names it: between __ZN18IOTimerEventSourceC1EPK11OSMetaClass and __ZN18IOTimerEventSourcedlEPvm, where the native kernel has this class's D2. The native D2 chains to the superclass destructor instead of poisoning; a kext calling it as its superclass destructor gets the same effect on a dying object. Source: libkern/libkern/c++/OSMetaClass.h. Proposed by UniXNU-penang (AppleARMPlatform called IOService's during matching)."
++    },
++    {
++      "original": "0xfffffe000b4e6764",
++      "original_size": 16,
++      "original_sha256": "36c614153927e889ba546ff5d63d9e12d41556108c9ba5f965a537c849f64fef",
++      "native_symbol": "__ZN12IOUserClientD2Ev",
++      "evidence": "Base-object destructor (D2) of an OSDefineMetaClassAndStructors class: iOS 27 poisons the vtable pointer (bti; mov x8, #-1; str x8, [x0]; ret), identical for every such class, so only its position names it: between __ZN12IOUserClientC1EPK11OSMetaClass and __ZN12IOUserClientdlEPvm, where the native kernel has this class's D2. The native D2 chains to the superclass destructor instead of poisoning; a kext calling it as its superclass destructor gets the same effect on a dying object. Source: libkern/libkern/c++/OSMetaClass.h. Proposed by UniXNU-penang (AppleARMPlatform called IOService's during matching)."
++    },
++    {
++      "original": "0xfffffe000b4f4184",
++      "original_size": 16,
++      "original_sha256": "36c614153927e889ba546ff5d63d9e12d41556108c9ba5f965a537c849f64fef",
++      "native_symbol": "__ZN17IOSharedDataQueueD2Ev",
++      "evidence": "Base-object destructor (D2) of an OSDefineMetaClassAndStructors class: iOS 27 poisons the vtable pointer (bti; mov x8, #-1; str x8, [x0]; ret), identical for every such class, so only its position names it: between __ZN17IOSharedDataQueueC1EPK11OSMetaClass and __ZN17IOSharedDataQueuedlEPvm, where the native kernel has this class's D2. The native D2 chains to the superclass destructor instead of poisoning; a kext calling it as its superclass destructor gets the same effect on a dying object. Source: libkern/libkern/c++/OSMetaClass.h. Proposed by UniXNU-penang (AppleARMPlatform called IOService's during matching)."
++    },
++    {
++      "original": "0xfffffe000b51cb84",
++      "original_size": 16,
++      "original_sha256": "36c614153927e889ba546ff5d63d9e12d41556108c9ba5f965a537c849f64fef",
++      "native_symbol": "__ZN24IOProviderPropertyMergerD2Ev",
++      "evidence": "Base-object destructor (D2) of an OSDefineMetaClassAndStructors class: iOS 27 poisons the vtable pointer (bti; mov x8, #-1; str x8, [x0]; ret), identical for every such class, so only its position names it: between __ZN24IOProviderPropertyMergerC1EPK11OSMetaClass and __ZN24IOProviderPropertyMergerdlEPvm, where the native kernel has this class's D2. The native D2 chains to the superclass destructor instead of poisoning; a kext calling it as its superclass destructor gets the same effect on a dying object. Source: libkern/libkern/c++/OSMetaClass.h. Proposed by UniXNU-penang (AppleARMPlatform called IOService's during matching)."
++    },
++    {
++      "original": "0xfffffe000b3d628c",
++      "original_size": 16,
++      "original_sha256": "36c614153927e889ba546ff5d63d9e12d41556108c9ba5f965a537c849f64fef",
++      "native_symbol": "__ZN8OSObjectD2Ev",
++      "evidence": "Base-object destructor (D2) of an OSDefineMetaClassAndStructors class: iOS 27 poisons the vtable pointer (bti; mov x8, #-1; str x8, [x0]; ret), identical for every such class, so only its position names it: between __ZN8OSObject9MetaClassC1Ev and __ZN8OSObjectdlEPvm, where the native kernel has this class's D2. The native D2 chains to the superclass destructor instead of poisoning; a kext calling it as its superclass destructor gets the same effect on a dying object. Source: libkern/libkern/c++/OSMetaClass.h. Proposed by UniXNU-penang (AppleARMPlatform called IOService's during matching)."
++    },
++    {
++      "original": "0xfffffe000b3d9804",
++      "original_size": 16,
++      "original_sha256": "36c614153927e889ba546ff5d63d9e12d41556108c9ba5f965a537c849f64fef",
++      "native_symbol": "__ZN12OSCollectionD2Ev",
++      "evidence": "Base-object destructor (D2) of an OSDefineMetaClassAndStructors class: iOS 27 poisons the vtable pointer (bti; mov x8, #-1; str x8, [x0]; ret), identical for every such class, so only its position names it: between __ZN12OSCollectionC2EPK11OSMetaClass and __ZN12OSCollection9MetaClassC2Ev, where the native kernel has this class's D2. The native D2 chains to the superclass destructor instead of poisoning; a kext calling it as its superclass destructor gets the same effect on a dying object. Source: libkern/libkern/c++/OSMetaClass.h. Proposed by UniXNU-penang (AppleARMPlatform called IOService's during matching)."
++    },
++    {
++      "original": "0xfffffe000b499cb8",
++      "original_size": 16,
++      "original_sha256": "36c614153927e889ba546ff5d63d9e12d41556108c9ba5f965a537c849f64fef",
++      "native_symbol": "__ZN6IOPMGRD2Ev",
++      "evidence": "Base-object destructor (D2) of an OSDefineMetaClassAndStructors class: iOS 27 poisons the vtable pointer (bti; mov x8, #-1; str x8, [x0]; ret), identical for every such class, so only its position names it: between __ZN6IOPMGRC2EPK11OSMetaClass and __ZN6IOPMGRnwEm, where the native kernel has this class's D2. The native D2 chains to the superclass destructor instead of poisoning; a kext calling it as its superclass destructor gets the same effect on a dying object. Source: libkern/libkern/c++/OSMetaClass.h. Proposed by UniXNU-penang (AppleARMPlatform called IOService's during matching)."
++    },
++    {
++      "original": "0xfffffe000b49d370",
++      "original_size": 16,
++      "original_sha256": "36c614153927e889ba546ff5d63d9e12d41556108c9ba5f965a537c849f64fef",
++      "native_symbol": "__ZN13IOEventSourceD2Ev",
++      "evidence": "Base-object destructor (D2) of an OSDefineMetaClassAndStructors class: iOS 27 poisons the vtable pointer (bti; mov x8, #-1; str x8, [x0]; ret), identical for every such class, so only its position names it: between __ZN13IOEventSourceC2EPK11OSMetaClass and __ZN13IOEventSource8openGateEv, where the native kernel has this class's D2. The native D2 chains to the superclass destructor instead of poisoning; a kext calling it as its superclass destructor gets the same effect on a dying object. Source: libkern/libkern/c++/OSMetaClass.h. Proposed by UniXNU-penang (AppleARMPlatform called IOService's during matching)."
++    },
++    {
++      "original": "0xfffffe000b4abd5c",
++      "original_size": 16,
++      "original_sha256": "36c614153927e889ba546ff5d63d9e12d41556108c9ba5f965a537c849f64fef",
++      "native_symbol": "__ZN8IOMapperD2Ev",
++      "evidence": "Base-object destructor (D2) of an OSDefineMetaClassAndStructors class: iOS 27 poisons the vtable pointer (bti; mov x8, #-1; str x8, [x0]; ret), identical for every such class, so only its position names it: between __ZN8IOMapperC2EPK11OSMetaClass and __ZN8IOMapper9MetaClassC2Ev, where the native kernel has this class's D2. The native D2 chains to the superclass destructor instead of poisoning; a kext calling it as its superclass destructor gets the same effect on a dying object. Source: libkern/libkern/c++/OSMetaClass.h. Proposed by UniXNU-penang (AppleARMPlatform called IOService's during matching)."
++    },
++    {
++      "original": "0xfffffe000b4c7b00",
++      "original_size": 16,
++      "original_sha256": "36c614153927e889ba546ff5d63d9e12d41556108c9ba5f965a537c849f64fef",
++      "native_symbol": "__ZN18IODTPlatformExpertD2Ev",
++      "evidence": "Base-object destructor (D2) of an OSDefineMetaClassAndStructors class: iOS 27 poisons the vtable pointer (bti; mov x8, #-1; str x8, [x0]; ret), identical for every such class, so only its position names it: between __ZN18IODTPlatformExpertC2EPK11OSMetaClass and __ZN18IODTPlatformExpert9MetaClassC2Ev, where the native kernel has this class's D2. The native D2 chains to the superclass destructor instead of poisoning; a kext calling it as its superclass destructor gets the same effect on a dying object. Source: libkern/libkern/c++/OSMetaClass.h. Proposed by UniXNU-penang (AppleARMPlatform called IOService's during matching)."
++    },
++    {
++      "original": "0xfffffe000b4c8530",
++      "original_size": 16,
++      "original_sha256": "36c614153927e889ba546ff5d63d9e12d41556108c9ba5f965a537c849f64fef",
++      "native_symbol": "__ZN12IOPlatformIOD2Ev",
++      "evidence": "Base-object destructor (D2) of an OSDefineMetaClassAndStructors class: iOS 27 poisons the vtable pointer (bti; mov x8, #-1; str x8, [x0]; ret), identical for every such class, so only its position names it: between __ZN12IOPlatformIOC2EPK11OSMetaClass and __ZN12IOPlatformIOnwEm, where the native kernel has this class's D2. The native D2 chains to the superclass destructor instead of poisoning; a kext calling it as its superclass destructor gets the same effect on a dying object. Source: libkern/libkern/c++/OSMetaClass.h. Proposed by UniXNU-penang (AppleARMPlatform called IOService's during matching)."
++    },
++    {
++      "original": "0xfffffe000b4dd934",
++      "original_size": 16,
++      "original_sha256": "36c614153927e889ba546ff5d63d9e12d41556108c9ba5f965a537c849f64fef",
++      "native_symbol": "__ZN21IOInterruptControllerD2Ev",
++      "evidence": "Base-object destructor (D2) of an OSDefineMetaClassAndStructors class: iOS 27 poisons the vtable pointer (bti; mov x8, #-1; str x8, [x0]; ret), identical for every such class, so only its position names it: between __ZN21IOInterruptController9MetaClassC1Ev and __ZN21IOInterruptControllerdlEPvm, where the native kernel has this class's D2. The native D2 chains to the superclass destructor instead of poisoning; a kext calling it as its superclass destructor gets the same effect on a dying object. Source: libkern/libkern/c++/OSMetaClass.h. Proposed by UniXNU-penang (AppleARMPlatform called IOService's during matching)."
++    },
++    {
++      "original": "0xfffffe000b4e7e34",
++      "original_size": 16,
++      "original_sha256": "36c614153927e889ba546ff5d63d9e12d41556108c9ba5f965a537c849f64fef",
++      "native_symbol": "__ZN16IOUserClient2022D2Ev",
++      "evidence": "Base-object destructor (D2) of an OSDefineMetaClassAndStructors class: iOS 27 poisons the vtable pointer (bti; mov x8, #-1; str x8, [x0]; ret), identical for every such class, so only its position names it: between __ZN16IOUserClient2022C2EPK11OSMetaClass and __ZN16IOUserClient20229MetaClassC2Ev, where the native kernel has this class's D2. The native D2 chains to the superclass destructor instead of poisoning; a kext calling it as its superclass destructor gets the same effect on a dying object. Source: libkern/libkern/c++/OSMetaClass.h. Proposed by UniXNU-penang (AppleARMPlatform called IOService's during matching)."
++    },
++    {
++      "original": "0xfffffe000b530650",
++      "original_size": 16,
++      "original_sha256": "36c614153927e889ba546ff5d63d9e12d41556108c9ba5f965a537c849f64fef",
++      "native_symbol": "__ZN17IONVRAMControllerD2Ev",
++      "evidence": "Base-object destructor (D2) of an OSDefineMetaClassAndStructors class: iOS 27 poisons the vtable pointer (bti; mov x8, #-1; str x8, [x0]; ret), identical for every such class, so only its position names it: between __ZN17IONVRAMControllerC2EPK11OSMetaClass and __ZN17IONVRAMController9MetaClassC2Ev, where the native kernel has this class's D2. The native D2 chains to the superclass destructor instead of poisoning; a kext calling it as its superclass destructor gets the same effect on a dying object. Source: libkern/libkern/c++/OSMetaClass.h. Proposed by UniXNU-penang (AppleARMPlatform called IOService's during matching)."
      }
    ],
    "data": [
-@@ -1271,6 +1761,24 @@
+@@ -1271,6 +1894,24 @@
        "native_symbol": "_gPESerialBaud",
        "addend": 0,
        "evidence": "32-bit global holding -1 in the original image. IOSerialFamily reads it when it sets a new tty up, takes 9600 when it is -1 and stores the result in t_ispeed and t_ospeed. Source pexpert/gen/pe_gen.c int32_t gPESerialBaud = -1, exported in config/Unsupported.exports; the kernel itself has no reader in the original image."
