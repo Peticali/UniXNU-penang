@@ -15,6 +15,7 @@ apply "$here/patches/unixnu/0001-ramdisk-find-payload-inside-initrd.patch" "$uni
 apply "$here/patches/unixnu/0003-kernel-xnu-arch-override.patch" "$unixnu"
 apply "$here/patches/unixnu/0004-xnuprelink-penang-layout.patch" "$unixnu/kits/XnuPrelink"
 apply "$here/patches/unixnu/0005-fileset-reference-linux-host.patch" "$unixnu"
+apply "$here/patches/unixnu/0007-xnuprelink-24A446-reviewed-libc-timebase.patch" "$unixnu/kits/XnuPrelink"
 if [ "${WITH_GPU:-0}" = 1 ]; then
 	git -C "$unixnu" submodule update --init drivers/AdrenoMetal >/dev/null
 	apply "$here/patches/unixnu/0006-adrenometal-penang-gpu-wip.patch" "$unixnu/drivers/AdrenoMetal"

@@ -1,0 +1,32 @@
+diff --git a/fixtures/fileset-24A446-symbols.json b/fixtures/fileset-24A446-symbols.json
+index bcc5ee9..cb424f9 100644
+--- a/fixtures/fileset-24A446-symbols.json
++++ b/fixtures/fileset-24A446-symbols.json
+@@ -1095,6 +1095,27 @@
+       "original_sha256": "461f0cd8c82fda303d244bd2e7d866dfa0a3a0e88e4e29eeaa32547988cb1a92",
+       "native_symbol": "_ml_io_read8",
+       "evidence": "Loads and returns one byte at x0. Directly precedes ml_io_read16, ml_io_read32 and ml_io_read64, which have the same shape for their widths. Source osfmk/arm64/machine_routines.c ml_io_read8; the native development build adds its timing checks around the same read."
++    },
++    {
++      "original": "0xfffffe000aecf034",
++      "original_size": 24,
++      "original_sha256": "9c11b138bb41e70a82b56473a1b2c71fc4c9cf3dd87b1233ccc4df8312741cf1",
++      "native_symbol": "_clock_timebase_info",
++      "evidence": "Copies the 8-byte mach_timebase_info at rtclock_timebase_const into *x0 (ldr [global+8]; str [x0]); the native body is the same four instructions without BTI. Source: osfmk/arm/rtclock.c clock_timebase_info. Imported by corecrypto; left unpaired by a Linux (upstream clang) LTO reference."
++    },
++    {
++      "original": "0xfffffe000b5ab7a0",
++      "original_size": 84,
++      "original_sha256": "8345a617274c609fda0d0f914d1c4056d106b5251f3152cb992449bc5004adca",
++      "native_symbol": "_memset_s",
++      "evidence": "cbz dst -> EINVAL, tbnz smax bit 63 (RSIZE_MAX), cmp n against smax with EOVERFLOW (84) and memset of min(n, smax): the native _memset_s prologue and checks instruction for instruction. Source: osfmk/arm64/memset_s.c. Imported by corecrypto."
++    },
++    {
++      "original": "0xfffffe000b5ac7d0",
++      "original_size": 168,
++      "original_sha256": "39b88939af73a485c4cbee95f92c93bcf1d2e97e27d3cca6704c52a25b76f9a1",
++      "native_symbol": "_memset",
++      "evidence": "Byte replicated with 0x0101010101010101, 64-byte blocks after a 16-byte aligned head: osfmk/arm64/bzero.s _memset (alias _secure_memset at the same native address, which leaves the pair ambiguous to the matcher). Imported by corecrypto."
+     }
+   ],
+   "data": [
