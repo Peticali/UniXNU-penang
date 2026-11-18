@@ -1,0 +1,17 @@
+From UniXNU-sheng patches/xnu-12377/zzzz-sheng-ipados27-bringup.patch (the native_mobile_graphics_client_probe hunk only).
+u27-disp1: offline-mobile-graphics-client=1 panicked "wrong externalMethod for IOUserClient2022 @IOUserClient.cpp:6640":
+the iPadOS 27 user client takes only the opaque-argument externalMethod.
+
+diff --git a/iokit/Kernel/IOUserClient.cpp b/iokit/Kernel/IOUserClient.cpp
+--- a/iokit/Kernel/IOUserClient.cpp
++++ b/iokit/Kernel/IOUserClient.cpp
+@@ -6925,7 +6925,8 @@ native_mobile_graphics_client_probe(void)
+ 		native_mobile_graphics_client_meta = (uintptr_t)client->getMetaClass();
+ 		native_mobile_graphics_client_size = client->getMetaClass()->getClassSize();
+ 		native_mobile_graphics_client_init = client->init();
+-		if (native_mobile_graphics_client_init) {
++		/* An IOUserClient2022 (iPadOS 27) takes only the opaque-argument externalMethod: skip the old-form selector check. */
++		if (native_mobile_graphics_client_init && !OSDynamicCast(IOUserClient2022, client)) {
+ 			IOExternalMethodArguments arguments = {};
+ 			const uint32_t selectors[] = {90, 0x80000000U, ~0U};
+ 			for (unsigned i = 0; i < 3; i++) {

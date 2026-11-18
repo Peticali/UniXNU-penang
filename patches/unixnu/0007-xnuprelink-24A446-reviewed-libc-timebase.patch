@@ -1,8 +1,8 @@
 diff --git a/fixtures/fileset-24A446-symbols.json b/fixtures/fileset-24A446-symbols.json
-index bcc5ee9..cf6fd28 100644
+index bcc5ee9..7cec5e6 100644
 --- a/fixtures/fileset-24A446-symbols.json
 +++ b/fixtures/fileset-24A446-symbols.json
-@@ -1095,6 +1095,1469 @@
+@@ -1095,6 +1095,1511 @@
        "original_sha256": "461f0cd8c82fda303d244bd2e7d866dfa0a3a0e88e4e29eeaa32547988cb1a92",
        "native_symbol": "_ml_io_read8",
        "evidence": "Loads and returns one byte at x0. Directly precedes ml_io_read16, ml_io_read32 and ml_io_read64, which have the same shape for their widths. Source osfmk/arm64/machine_routines.c ml_io_read8; the native development build adds its timing checks around the same read."
@@ -452,8 +452,8 @@ index bcc5ee9..cf6fd28 100644
 +      "original": "0xfffffe000af07580",
 +      "original_size": 240,
 +      "original_sha256": "f668063ac0be5b7921daed7f5a0c9c893bba13e0cb75e9f17ff4e3492c7bc54a",
-+      "native_symbol": "_vnode_hold",
-+      "evidence": "Panics with 'vp %p holdcount overflow' naming 'vnode_hold' in 'vfs_subr.c'; takes the vnode hold reference. Source: bsd/vfs/vfs_subr.c. Imported by sandbox."
++      "native_symbol": "_vnode_getparent",
++      "evidence": "2026-11-18 u27-disp10: corrected from _vnode_hold (whose holdcount-overflow panic string this body inlines). Body: name lock, pvp = vp->v_parent (+192), vid = pvp->v_id (+116), holdcount +1 (+180, the inlined vnode_hold), unlock, vnode_getwithvid(pvp, vid): returns the parent with an iocount = vnode_getparent. Sandbox's __mac_syscall handler (+0x12adc) uses the result as the new vnode and puts the old one; bound to vnode_hold (void) it kept vp without an iocount and panicked 'vnode_put: iocount < 1'. The real vnode_hold is 0xfffffe000af215f8."
 +    },
 +    {
 +      "original": "0xfffffe000b4724ec",
@@ -1469,10 +1469,52 @@ index bcc5ee9..cf6fd28 100644
 +      "original_sha256": "614646f1f25c6bfbbfe2fb17731299300d67bb7d5b9c41d070aaf331a31c4a7c",
 +      "native_symbol": "_csfg_get_csblob",
 +      "evidence": "AMFI's mmap check (mac_file_check_mmap) reaches this through its GOT slot 0xfffffe0008135fe8 (x17 at the unmapped-stub panic, u27-sysos5 photo). Body equal to the native csfg_get_csblob instruction for instruction (fg->fg_ops discriminator 34108 at +40, fg_data 4533 at +56, DTYPE_VNODE check, tail call ubc_cs_blob_get(vp, -1, -1, offset)); csfg_get_platform_identifier, the other 1.00 fingerprint, reads blob+128 after the call, which this body does not."
++    },
++    {
++      "original": "0xfffffe000b4a66bc",
++      "original_size": 208,
++      "original_sha256": "6d354648ba99ef4aadde7afaea05f5e544acb4d5920a1e2a8151363945282b8b",
++      "native_symbol": "__ZN24IOBufferMemoryDescriptor17inTaskWithOptionsEP4taskjmm",
++      "evidence": "2026-11-18 u27-disp2: IOSurface (default surface of the GOP display, installDefaultSurface) called it unmapped. Body: alloc via metaclass, initWithPhysicalMask(task, options, capacity, alignment, 0) at slot 0x128, release+NULL on failure = the 4-argument inTaskWithOptions (pair-callers 0.79; the 6-argument variant passes its tags in x4/x5)."
++    },
++    {
++      "original": "0xfffffe000b4bc7ec",
++      "original_size": 56,
++      "original_sha256": "23bcb7a402a0bd77385da410e16b0c00f7ce46c32018873d604c481a9efeec24",
++      "native_symbol": "__ZN11IOMemoryMap18getPhysicalAddressEv",
++      "evidence": "2026-11-18 u27-disp2 GOP display bring-up: stubbed for IOSurface / IOMobileGraphicsFamily on the Linux build; pair-callers.py fingerprint 1.00 with the next candidate at 0.56 (IOMemoryDescriptor::getPhysicalAddress, which pairs to 0xfffffe000b4bcafc)."
++    },
++    {
++      "original": "0xfffffe000b4bcafc",
++      "original_size": 56,
++      "original_sha256": "bcb800b9ff3b167d75cc60a9b98c1a3bca39595b83ea44dfea8af99374139e7b",
++      "native_symbol": "__ZN18IOMemoryDescriptor18getPhysicalAddressEv",
++      "evidence": "2026-11-18 u27-disp2 GOP display bring-up: stubbed for IOSurface / IOMobileGraphicsFamily on the Linux build; pair-callers.py fingerprint 1.00 with the next candidate at 0.56 (IOMemoryMap::getPhysicalAddress, which pairs to 0xfffffe000b4bc7ec)."
++    },
++    {
++      "original": "0xfffffe000adbb540",
++      "original_size": 40,
++      "original_sha256": "0c5b8f8bc8b5ccf28642b06122839e990757985759e7c489f7137cf2b2d43845",
++      "native_symbol": "_get_task_map",
++      "evidence": "2026-11-18 u27-disp2 GOP display bring-up: stubbed for IOSurface / IOMobileGraphicsFamily on the Linux build; pair-callers.py fingerprint 1.00 with the next candidate at 0.60 (get_task_pmap)."
++    },
++    {
++      "original": "0xfffffe000b3d9aa4",
++      "original_size": 244,
++      "original_sha256": "2e579218934ec34c455287a4b531a8fc4c6de465a05cae206a4e4deb7fd184a2",
++      "native_symbol": "__ZN12OSCollection14iterateObjectsEU13block_pointerFbP8OSObjectE",
++      "evidence": "2026-11-18 u27-disp2 GOP display bring-up: stubbed for IOSurface / IOMobileGraphicsFamily on the Linux build; pair-callers.py fingerprint 1.00 with the next candidate at 0.93 (the function-pointer variant)."
++    },
++    {
++      "original": "0xfffffe000b4e816c",
++      "original_size": 136,
++      "original_sha256": "36823fe239ca169efe6f2ad493756a03930af41bc936280638717f56e5b47555",
++      "native_symbol": "__ZN12IOUserClient27copyObjectForPortNameInTaskEP4taskjR11OSSharedPtrI8OSObjectE",
++      "evidence": "2026-11-18 u27-disp2 GOP display bring-up: stubbed for IOSurface / IOMobileGraphicsFamily on the Linux build; pair-callers.py fingerprint 1.00 with the next candidate at 0.67 (the OSObject** variant)."
      }
    ],
    "data": [
-@@ -1271,6 +2734,30 @@
+@@ -1271,6 +2776,30 @@
        "native_symbol": "_gPESerialBaud",
        "addend": 0,
        "evidence": "32-bit global holding -1 in the original image. IOSerialFamily reads it when it sets a new tty up, takes 9600 when it is -1 and stores the result in t_ispeed and t_ospeed. Source pexpert/gen/pe_gen.c int32_t gPESerialBaud = -1, exported in config/Unsupported.exports; the kernel itself has no reader in the original image."

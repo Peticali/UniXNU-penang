@@ -19,3 +19,7 @@ penang-unmapped-stub-slot.patch
 penang-fips-nointeg.patch
 penang-initproc-user-report.patch
 penang-lockdown-mode-public-sysctl.patch
+penang-mobile-graphics-client-2022.patch
+penang-posix-spawnattr-darwin26.patch
+penang-spawn-badexec-report.patch
+penang-user-pac-header-emulate.patch

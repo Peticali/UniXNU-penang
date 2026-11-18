@@ -36,3 +36,5 @@ CONFIG_XNU_OWNER_UNION_SYSTEMOS=y
 # cache. Without it: "disallowing unsupported code signature page shift: 14" and dyld "code signature registration for
 # shared cache failed" (u27-sysos1).
 CONFIG_XNU_NATIVE_CS_HASH_CACHE=y
+# The GOP display: GopFramebuffer bound to the original IOMobileFramebufferLegacy (scripts/build-penang-legacy-display.py).
+CONFIG_XNU_NATIVE_LEGACY_DISPLAY=y

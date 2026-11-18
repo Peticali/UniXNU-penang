@@ -9,7 +9,7 @@ description = "Motorola moto g53 5G (XT2335, SM4350 holi): iOS 26 without PAC"
 kit = "penang"
 
 [components]
-include = ["ArmDTPlatform", "ArmCpu", "SoftwareAES", "XnuPrelink", "DarwinBoot", "ShengUfs", "RamBlock"]
+include = ["ArmDTPlatform", "ArmCpu", "SoftwareAES", "XnuPrelink", "DarwinBoot", "ShengUfs", "RamBlock", "GopFramebuffer"]
 # ShengUfs (feeds.toml: the penang fork) publishes the root IOMedia; RamBlock is the Data-disk class the source-storage
 # runtime registers third (build-sheng-source-storage.py compiles it unconditionally), as on UniXNU-sheng.
 
@@ -37,6 +37,8 @@ archives = [
   "component:ShengUfs",
   "build-sheng-source-storage.py --policy-dir scripts/policies/ipados-27.0.1-24A446",
   "component:RamBlock",
+  # The GOP display (UniXNU GopFramebuffer bound to the original IOMobileFramebufferLegacy of 24A446): scripts/build-penang-legacy-display.py.
+  "build-penang-legacy-display.py",
   "/mnt/nvme/xnu-build/unixnu/UniXNU-penang/scripts/build-reference-lto.py --tree .",
 ]
 
@@ -96,7 +98,10 @@ title = "UniXNU"
 # /usr/libexec/cc_fips_test without arguments, which reads this boot-arg. Its integrity test hashes libcorecrypto's
 # __TEXT, which the runtime PAC rewrite (penang-user-pac-trap-and-patch) changes, so it failed with -74 and launchd
 # panicked (u27-sysos6); every known-answer test still runs and passed.
-kernel_args = ["-v", "serial=3", "use_contiguous_hint=0", "kt_fixed_zones=120", "-no_slto_panic", "native-source-storage=1", "native-ufs-root=1", "native-ufs-soc=4350", "fips_mode=64", "data-persist=2"]   # 4K kernel in a fileset laid out on 16K boundaries: arm_vm_init.c:1107 hint-change assert on late protection changes
+# Display (UniXNU docs/porting/display.md step 2, CPU presentation): IOMobileGraphicsFamily is loaded, the owned GOP backend
+# registers on the firmware framebuffer (offline-legacy-*, as UniXNU-sheng iPadOS 27 without its GPU hand-off fb-gpu=1); scale 2 on the
+# 720 x 1600 panel = 360 x 800 points.
+kernel_args = ["-v", "serial=3", "use_contiguous_hint=0", "kt_fixed_zones=120", "-no_slto_panic", "native-source-storage=1", "native-ufs-root=1", "native-ufs-soc=4350", "fips_mode=64", "data-persist=2", "offline-mobile-graphics-load=1", "offline-mobile-graphics-client=1", "offline-legacy-register=1", "offline-legacy-gop=1", "offline-legacy-unit-scale=2", "offline-legacy-pm=1", "offline-legacy-validate=1", "offline-legacy-transfer=1", "offline-legacy-cpu-present=1", "offline-legacy-phase=4", "vsync=60", "backlight=1"]   # 4K kernel in a fileset laid out on 16K boundaries: arm_vm_init.c:1107 hint-change assert on late protection changes
 
 [package]
 # The UniXNU checkout, relative to this repository: scripts/package.sh reads it.
@@ -150,6 +155,8 @@ ramdisk_compression = "uefi-chunks"
 "kernel-ctrr-to-be-enabled" = 0
 
 ["adt"."defaults"."u32"]
+# No suspend on this board yet: keep the CPU from parking (UniXNU docs/porting/device-tree.md).
+"sleep-disabled" = 1
 # No ApplePMGRNub will appear (no Apple power manager): without it AMFI waits for one and panics "AMFI: No PMGR"
 # (ConfigurationSettings.cpp:392), as UniXNU's vermeer record documents.
 "vmm-present" = 1
@@ -161,3 +168,18 @@ ramdisk_compression = "uefi-chunks"
 first_lba = 0x12e600
 last_lba = 0x1d327fa
 lba_bytes = 4096
+
+# MobileGestalt identity (UniXNU docs/guide/mobilegestalt.md): the display gamut UniXNU-sheng's display area configures (sRGB, the GOP
+# framebuffer's 8-bit BGRA), and the g53's buttons: power and volume, no Home button (home-button-type 2, swipe gestures).
+["adt"."product"."string"]
+"artwork-display-gamut" = "sRGB"
+
+["adt"."buttons"."string"]
+"compatible" = "buttons"
+"device_type" = "buttons"
+
+["adt"."buttons"."strings"]
+"button-names" = ["hold", "voldown", "volup"]
+
+["adt"."buttons"."u32"]
+"home-button-type" = 2

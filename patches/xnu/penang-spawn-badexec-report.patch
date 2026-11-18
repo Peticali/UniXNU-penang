@@ -1,0 +1,523 @@
+--- a/bsd/kern/kern_exec.c	2026-11-18 18:20:23.430974235 -0300
++++ b/bsd/kern/kern_exec.c	2026-11-18 18:28:24.507794957 -0300
+@@ -328,6 +328,9 @@
+ #include <sys/imgact.h>
+ 
+ #include <sys/sdt.h>
++/* penang: which check returned EBADEXEC to the last image activation (printed by posix_spawn; 0 = not a tagged site). */
++volatile int penang_badexec_site;
++volatile int penang_lf_site;
+ 
+ 
+ /*
+@@ -828,6 +831,7 @@
+ 		}
+ 
+ 		/* Requested binary preference was not honored */
++		penang_badexec_site = 1;
+ 		error = EBADEXEC;
+ 		goto bad;
+ 	}
+@@ -3043,6 +3047,7 @@
+ encapsulated_binary:
+ 	/* Limit the number of iterations we will attempt on each binary */
+ 	if (++itercount > EAI_ITERLIMIT) {
++		penang_badexec_site = 2;
+ 		error = EBADEXEC;
+ 		goto bad;
+ 	}
+@@ -5104,6 +5109,8 @@
+ 	 * Warning: If activation failed after point of no return, it returns error
+ 	 * as 0 and pretends the call succeeded.
+ 	 */
++	penang_badexec_site = 0;
++	penang_lf_site = 0;
+ 	error = exec_activate_image(imgp);
+ #if defined(HAS_APPLE_PAC)
+ 	const uint8_t disable_user_jop = imgp->ip_flags & IMGPF_NOJOP ? TRUE : FALSE;
+@@ -5260,6 +5267,12 @@
+ 	}
+ 
+ bad:
++	if (error == EBADEXEC) {
++		printf("penang spawn EBADEXEC: site %d lf %d path %s attr %llu flags 0x%x binpref %x/%x ports %llu mac %llu\n", penang_badexec_site, penang_lf_site,
++		    (imgp && imgp->ip_strings) ? imgp->ip_strings : "?", (unsigned long long)px_args.attr_size, px_sa.psa_flags,
++		    px_sa.psa_binprefs[0], px_sa.psa_subcpuprefs[0], (unsigned long long)px_args.port_actions_size,
++		    (unsigned long long)px_args.mac_extensions_size);
++	}
+ 
+ 	if (error == 0) {
+ 		/* reset delay idle sleep status if set */
+@@ -9268,6 +9281,7 @@
+ 		return EAUTH;
+ 	case LOAD_FAILURE:
+ 	default:
++		penang_badexec_site = 100 + (int)lrtn;
+ 		return EBADEXEC;
+ 	}
+ }
+--- a/bsd/kern/ubc_subr.c	2026-11-18 18:20:23.432909110 -0300
++++ b/bsd/kern/ubc_subr.c	2026-11-18 18:20:23.449956292 -0300
+@@ -358,16 +358,17 @@
+  *		EBADEXEC		Invalid code signature
+  */
+ 
++extern volatile int penang_badexec_site;   /* kern_exec.c, penang diagnostic */
+ static int
+ cs_validate_codedirectory(const CS_CodeDirectory *cd, size_t length)
+ {
+ 	struct cs_hash const *hashtype;
+ 
+ 	if (length < sizeof(*cd)) {
+-		return EBADEXEC;
++		return (penang_badexec_site = 11, EBADEXEC);
+ 	}
+ 	if (ntohl(cd->magic) != CSMAGIC_CODEDIRECTORY) {
+-		return EBADEXEC;
++		return (penang_badexec_site = 12, EBADEXEC);
+ 	}
+ 	if ((cd->pageSize != PAGE_SHIFT_4K) && (cd->pageSize != PAGE_SHIFT)
+ #if defined(XNU_NATIVE_CS_HASH_CACHE) && XNU_NATIVE_CS_HASH_CACHE
+@@ -375,34 +376,34 @@
+ #endif
+ 	    ) {
+ 		printf("disallowing unsupported code signature page shift: %u\n", cd->pageSize);
+-		return EBADEXEC;
++		return (penang_badexec_site = 13, EBADEXEC);
+ 	}
+ 	hashtype = cs_find_md(cd->hashType);
+ 	if (hashtype == NULL) {
+-		return EBADEXEC;
++		return (penang_badexec_site = 14, EBADEXEC);
+ 	}
+ 
+ 	if (cd->hashSize != hashtype->cs_size) {
+-		return EBADEXEC;
++		return (penang_badexec_site = 15, EBADEXEC);
+ 	}
+ 
+ 	if (length < ntohl(cd->hashOffset)) {
+-		return EBADEXEC;
++		return (penang_badexec_site = 16, EBADEXEC);
+ 	}
+ 
+ 	/* check that nSpecialSlots fits in the buffer in front of hashOffset */
+ 	if (ntohl(cd->hashOffset) / hashtype->cs_size < ntohl(cd->nSpecialSlots)) {
+-		return EBADEXEC;
++		return (penang_badexec_site = 17, EBADEXEC);
+ 	}
+ 
+ 	/* check that codeslots fits in the buffer */
+ 	if ((length - ntohl(cd->hashOffset)) / hashtype->cs_size < ntohl(cd->nCodeSlots)) {
+-		return EBADEXEC;
++		return (penang_badexec_site = 18, EBADEXEC);
+ 	}
+ 
+ 	if (ntohl(cd->version) >= CS_SUPPORTSSCATTER && cd->scatterOffset) {
+ 		if (length < ntohl(cd->scatterOffset)) {
+-			return EBADEXEC;
++			return (penang_badexec_site = 19, EBADEXEC);
+ 		}
+ 
+ 		const SC_Scatter *scatter = (const SC_Scatter *)
+@@ -417,14 +418,14 @@
+ 		while (1) {
+ 			/* check that the end of each scatter buffer in within the length */
+ 			if (((const uint8_t *)scatter) + sizeof(scatter[0]) > (const uint8_t *)cd + length) {
+-				return EBADEXEC;
++				return (penang_badexec_site = 20, EBADEXEC);
+ 			}
+ 			uint32_t scount = ntohl(scatter->count);
+ 			if (scount == 0) {
+ 				break;
+ 			}
+ 			if (nPages + scount < nPages) {
+-				return EBADEXEC;
++				return (penang_badexec_site = 21, EBADEXEC);
+ 			}
+ 			nPages += scount;
+ 			scatter++;
+@@ -434,34 +435,34 @@
+ 		}
+ #if 0 /* rdar://12579439 */
+ 		if (nPages != ntohl(cd->nCodeSlots)) {
+-			return EBADEXEC;
++			return (penang_badexec_site = 22, EBADEXEC);
+ 		}
+ #endif
+ 	}
+ 
+ 	if (length < ntohl(cd->identOffset)) {
+-		return EBADEXEC;
++		return (penang_badexec_site = 23, EBADEXEC);
+ 	}
+ 
+ 	/* identifier is NULL terminated string */
+ 	if (cd->identOffset) {
+ 		const uint8_t *ptr = (const uint8_t *)cd + ntohl(cd->identOffset);
+ 		if (memchr(ptr, 0, length - ntohl(cd->identOffset)) == NULL) {
+-			return EBADEXEC;
++			return (penang_badexec_site = 24, EBADEXEC);
+ 		}
+ 	} else {
+-		return EBADEXEC;
++		return (penang_badexec_site = 25, EBADEXEC);
+ 	}
+ 
+ 	/* team identifier is NULL terminated string */
+ 	if (ntohl(cd->version) >= CS_SUPPORTSTEAMID && ntohl(cd->teamOffset)) {
+ 		if (length < ntohl(cd->teamOffset)) {
+-			return EBADEXEC;
++			return (penang_badexec_site = 26, EBADEXEC);
+ 		}
+ 
+ 		const uint8_t *ptr = (const uint8_t *)cd + ntohl(cd->teamOffset);
+ 		if (memchr(ptr, 0, length - ntohl(cd->teamOffset)) == NULL) {
+-			return EBADEXEC;
++			return (penang_badexec_site = 27, EBADEXEC);
+ 		}
+ 	}
+ 
+@@ -471,7 +472,7 @@
+ 		const uintptr_t ptr_end = ptr + ntohl(cd->linkageSize);
+ 
+ 		if (ptr_end < ptr || ptr < (uintptr_t)cd || ptr_end > (uintptr_t)cd + length) {
+-			return EBADEXEC;
++			return (penang_badexec_site = 28, EBADEXEC);
+ 		}
+ 	}
+ 
+--- a/bsd/kern/mach_loader.c	2026-11-18 18:28:24.488661360 -0300
++++ b/bsd/kern/mach_loader.c	2026-11-18 18:28:24.505840165 -0300
+@@ -103,6 +103,9 @@
+ #if __arm64__
+ #include <arm64/x86_64_compat.h>
+ 
++/* penang: the line of the last LOAD_FAILURE (kern_exec.c prints it with a spawn EBADEXEC). */
++extern volatile int penang_lf_site;
++
+ #if DEVELOPMENT || DEBUG
+ /*
+  * CoreAnalytics event for tracking processes that attempt to use 4K pages
+@@ -1128,7 +1131,7 @@
+ 		kret = task_start_halt(task);
+ 		if (kret != KERN_SUCCESS) {
+ 			imgp->ip_free_map = map;
+-			return LOAD_FAILURE;
++			return (penang_lf_site = 1131, LOAD_FAILURE);
+ 		}
+ 		proc_transcommit(p, 0);
+ 		workq_mark_exiting(p);
+@@ -1297,7 +1300,7 @@
+ 	 *	Break infinite recursion
+ 	 */
+ 	if (depth > 2) {
+-		return LOAD_FAILURE;
++		return (penang_lf_site = 1300, LOAD_FAILURE);
+ 	}
+ 
+ 	depth++;
+@@ -1329,12 +1332,12 @@
+ 	switch (header->filetype) {
+ 	case MH_EXECUTE:
+ 		if (depth != 1 && depth != 3) {
+-			return LOAD_FAILURE;
++			return (penang_lf_site = 1332, LOAD_FAILURE);
+ 		}
+ 		if (header->flags & MH_DYLDLINK) {
+ 			/* Check properties of dynamic executables */
+ 			if (!(header->flags & MH_PIE) && pie_required(header->cputype, header->cpusubtype & ~CPU_SUBTYPE_MASK)) {
+-				return LOAD_FAILURE;
++				return (penang_lf_site = 1337, LOAD_FAILURE);
+ 			}
+ 			result->needs_dynlinker = TRUE;
+ 		} else if (header->cputype == CPU_TYPE_X86_64) {
+@@ -1346,19 +1349,19 @@
+ 		} else {
+ 			/* Check properties of static executables (disallowed except for development) */
+ #if !(DEVELOPMENT || DEBUG)
+-			return LOAD_FAILURE;
++			return (penang_lf_site = 1349, LOAD_FAILURE);
+ #endif
+ 		}
+ 		break;
+ 	case MH_DYLINKER:
+ 		if (depth != 2) {
+-			return LOAD_FAILURE;
++			return (penang_lf_site = 1355, LOAD_FAILURE);
+ 		}
+ 		is_dyld = TRUE;
+ 		break;
+ 
+ 	default:
+-		return LOAD_FAILURE;
++		return (penang_lf_site = 1361, LOAD_FAILURE);
+ 	}
+ 
+ 	/*
+@@ -1498,10 +1501,10 @@
+ 					/* Driver binaries have no entry point */
+ 					ret = setup_driver_main(thread, slide, result);
+ 				} else {
+-					ret = LOAD_FAILURE;
++					ret = (penang_lf_site = 1501, LOAD_FAILURE);
+ 				}
+ 			} else if (!result->using_lcmain && result->validentry == 0) {
+-				ret = LOAD_FAILURE;
++				ret = (penang_lf_site = 1504, LOAD_FAILURE);
+ 			}
+ 			if (ret != KERN_SUCCESS) {
+ 				thread_state_initialize(thread);
+@@ -1742,7 +1745,7 @@
+ 				if ((depth == 1) && (dlp == 0)) {
+ 					dlp = (struct dylinker_command *)lcp;
+ 				} else {
+-					ret = LOAD_FAILURE;
++					ret = (penang_lf_site = 1745, LOAD_FAILURE);
+ 				}
+ 				break;
+ 			case LC_UUID:
+@@ -1811,7 +1814,7 @@
+ 							}
+ 							if (cs_process_global_enforcement() ||
+ 							    (result->csflags & (CS_HARD | CS_KILL | CS_ENFORCEMENT))) {
+-								ret = LOAD_FAILURE;
++								ret = (penang_lf_site = 1814, LOAD_FAILURE);
+ 							}
+ 							result->csflags &= ~CS_VALID;
+ 						}
+@@ -1937,12 +1940,12 @@
+ 
+ 	if (ret == LOAD_SUCCESS) {
+ 		if (!got_code_signatures && cs_process_global_enforcement()) {
+-			ret = LOAD_FAILURE;
++			ret = (penang_lf_site = 1940, LOAD_FAILURE);
+ 		}
+ 
+ 		/* Make sure if we need dyld, we got it */
+ 		if (result->needs_dynlinker && !dlp) {
+-			ret = LOAD_FAILURE;
++			ret = (penang_lf_site = 1945, LOAD_FAILURE);
+ 		}
+ 
+ 		if ((ret == LOAD_SUCCESS) && (dlp != 0)) {
+@@ -1980,11 +1983,11 @@
+ 
+ 		if ((ret == LOAD_SUCCESS) && (depth == 1)) {
+ 			if (result->thread_count == 0) {
+-				ret = LOAD_FAILURE;
++				ret = (penang_lf_site = 1983, LOAD_FAILURE);
+ 			}
+ #if CONFIG_ENFORCE_SIGNED_CODE
+ 			if (!(result->csflags & CS_NO_UNTRUSTED_HELPERS)) {
+-				ret = LOAD_FAILURE;
++				ret = (penang_lf_site = 1987, LOAD_FAILURE);
+ 			}
+ #endif
+ 		}
+@@ -2258,7 +2261,7 @@
+ 		/* The DSMOS pager can only be used by apple signed code */
+ 		struct cs_blob * blob = csvnode_get_blob(vp, file_off);
+ 		if (blob == NULL || !blob->csb_platform_binary || blob->csb_platform_path) {
+-			return LOAD_FAILURE;
++			return (penang_lf_site = 2261, LOAD_FAILURE);
+ 		}
+ 
+ 		kr = vm_map_apple_protected(map,
+@@ -2270,7 +2273,7 @@
+ 	}
+ 
+ 	if (kr != KERN_SUCCESS) {
+-		return LOAD_FAILURE;
++		return (penang_lf_site = 2273, LOAD_FAILURE);
+ 	}
+ 	return LOAD_SUCCESS;
+ }
+@@ -2614,7 +2617,7 @@
+ 			ret = vm_map_raise_min_offset(map, vm_map_page_size(map));
+ 			if (ret != KERN_SUCCESS) {
+ 				DEBUG4K_ERROR("LOAD_FAILURE ret 0x%x\n", ret);
+-				return LOAD_FAILURE;
++				return (penang_lf_site = 2617, LOAD_FAILURE);
+ 			}
+ 			/* and a "soft" PAGEZERO for the rest */
+ 			if (vm_size + slide > vm_map_page_size(map)) {
+@@ -2643,7 +2646,7 @@
+ 		    vm_end_aligned);
+ 		if (ret != KERN_SUCCESS) {
+ 			DEBUG4K_ERROR("LOAD_FAILURE ret 0x%x\n", ret);
+-			return LOAD_FAILURE;
++			return (penang_lf_site = 2646, LOAD_FAILURE);
+ 		}
+ 		return LOAD_SUCCESS;
+ 	} else {
+@@ -2798,7 +2801,7 @@
+ 
+ 			if (rc) {
+ 				DEBUG4K_ERROR("LOAD_FAILURE copyout 0x%llx 0x%llx\n", map_addr + scp->filesize, delta_size);
+-				return LOAD_FAILURE;
++				return (penang_lf_site = 2801, LOAD_FAILURE);
+ 			}
+ 		}
+ #endif /* FIXME */
+@@ -3004,7 +3007,7 @@
+ 		return LOAD_BADMACHO;
+ 	}
+ 	if (result->thread_count != 0) {
+-		return LOAD_FAILURE;
++		return (penang_lf_site = 3007, LOAD_FAILURE);
+ 	}
+ 
+ 	if (thread == THREAD_NULL) {
+@@ -3037,7 +3040,7 @@
+ 	/* use default location for stack */
+ 	ret = thread_userstackdefault(&addr, result->is_64bit_addr);
+ 	if (ret != KERN_SUCCESS) {
+-		return LOAD_FAILURE;
++		return (penang_lf_site = 3040, LOAD_FAILURE);
+ 	}
+ 
+ 	/* The stack slides down from the default location */
+@@ -3045,7 +3048,7 @@
+ 
+ 	if (result->using_lcmain || result->entry_point != MACH_VM_MIN_ADDRESS) {
+ 		/* Already processed LC_MAIN or LC_UNIXTHREAD */
+-		return LOAD_FAILURE;
++		return (penang_lf_site = 3048, LOAD_FAILURE);
+ 	}
+ 
+ 	/* kernel does *not* use entryoff from LC_MAIN.	 Dyld uses it. */
+@@ -3054,7 +3057,7 @@
+ 
+ 	ret = thread_state_initialize( thread );
+ 	if (ret != KERN_SUCCESS) {
+-		return LOAD_FAILURE;
++		return (penang_lf_site = 3057, LOAD_FAILURE);
+ 	}
+ 
+ 	result->unixproc = TRUE;
+@@ -3085,7 +3088,7 @@
+ 	/* use default location for stack */
+ 	ret = thread_userstackdefault(&addr, result->is_64bit_addr);
+ 	if (ret != KERN_SUCCESS) {
+-		return LOAD_FAILURE;
++		return (penang_lf_site = 3088, LOAD_FAILURE);
+ 	}
+ 
+ 	/* The stack slides down from the default location */
+@@ -3094,14 +3097,14 @@
+ 
+ 	if (result->using_lcmain || result->entry_point != MACH_VM_MIN_ADDRESS) {
+ 		/* Already processed LC_MAIN or LC_UNIXTHREAD */
+-		return LOAD_FAILURE;
++		return (penang_lf_site = 3097, LOAD_FAILURE);
+ 	}
+ 
+ 	result->needs_dynlinker = TRUE;
+ 
+ 	ret = thread_state_initialize( thread );
+ 	if (ret != KERN_SUCCESS) {
+-		return LOAD_FAILURE;
++		return (penang_lf_site = 3104, LOAD_FAILURE);
+ 	}
+ 
+ 	result->unixproc = TRUE;
+@@ -3127,7 +3130,7 @@
+ 		return LOAD_BADMACHO;
+ 	}
+ 	if (result->thread_count != 0) {
+-		return LOAD_FAILURE;
++		return (penang_lf_site = 3130, LOAD_FAILURE);
+ 	}
+ 
+ 	if (thread == THREAD_NULL) {
+@@ -3166,7 +3169,7 @@
+ 
+ 		if (result->using_lcmain || result->entry_point != MACH_VM_MIN_ADDRESS) {
+ 			/* Already processed LC_MAIN or LC_UNIXTHREAD */
+-			return LOAD_FAILURE;
++			return (penang_lf_site = 3169, LOAD_FAILURE);
+ 		}
+ 
+ 		result->entry_point = (user_addr_t)addr;
+@@ -3209,7 +3212,7 @@
+ 		local_ts_size = total_size;
+ 		local_ts = (uint32_t *)kalloc_data(local_ts_size, Z_WAITOK);
+ 		if (local_ts == NULL) {
+-			return LOAD_FAILURE;
++			return (penang_lf_site = 3212, LOAD_FAILURE);
+ 		}
+ 		memcpy(local_ts, ts, local_ts_size);
+ 		ts = local_ts;
+@@ -3296,7 +3299,7 @@
+ 		{
+ 			ret = thread_userstack(thread, flavor, (thread_state_t)ts, size, user_stack, customstack, result->is_64bit_data);
+ 			if (ret != KERN_SUCCESS) {
+-				return LOAD_FAILURE;
++				return (penang_lf_site = 3299, LOAD_FAILURE);
+ 			}
+ 		}
+ 
+@@ -3346,7 +3349,7 @@
+ 		 */
+ 		ret = thread_entrypoint(thread, flavor, (thread_state_t)ts, size, entry_point);
+ 		if (ret != KERN_SUCCESS) {
+-			return LOAD_FAILURE;
++			return (penang_lf_site = 3349, LOAD_FAILURE);
+ 		}
+ 		ts += size;     /* ts is a (uint32_t *) */
+ 	}
+@@ -3837,7 +3840,7 @@
+ 
+ 		if (error != EAGAIN) {
+ 			printf("load_code_signature: revalidation failed: %d\n", error);
+-			ret = LOAD_FAILURE;
++			ret = (penang_lf_site = 3840, LOAD_FAILURE);
+ 			goto out;
+ 		}
+ 
+@@ -3899,7 +3902,7 @@
+ 			ubc_cs_blob_deallocate(addr, blob_size);
+ 			addr = 0;
+ 		}
+-		ret = LOAD_FAILURE;
++		ret = (penang_lf_site = 3902, LOAD_FAILURE);
+ 		goto out;
+ 	} else {
+ 		/* ubc_cs_blob_add() has consumed "addr" */
+@@ -3979,7 +3982,7 @@
+ 		return LOAD_SUCCESS;
+ 	}
+ 	if (NULL == text_crypter_create) {
+-		return LOAD_FAILURE;
++		return (penang_lf_site = 3982, LOAD_FAILURE);
+ 	}
+ 
+ 	vpath = zalloc(ZV_NAMEI);
+@@ -3988,7 +3991,7 @@
+ 	error = vn_getpath(vp, vpath, &len);
+ 	if (error) {
+ 		zfree(ZV_NAMEI, vpath);
+-		return LOAD_FAILURE;
++		return (penang_lf_site = 3991, LOAD_FAILURE);
+ 	}
+ 
+ 	if (eip->cryptsize == 0) {
+@@ -4142,7 +4145,7 @@
+ 		if (error == ENOENT) {
+ 			error = LOAD_ENOENT;
+ 		} else {
+-			error = LOAD_FAILURE;
++			error = (penang_lf_site = 4145, LOAD_FAILURE);
+ 		}
+ 		return error;
+ 	}
+@@ -4157,7 +4160,7 @@
+ 
+ 	/* get size */
+ 	if ((error = vnode_size(vp, &fsize, ctx)) != 0) {
+-		error = LOAD_FAILURE;
++		error = (penang_lf_site = 4160, LOAD_FAILURE);
+ 		goto bad1;
+ 	}
+ 
