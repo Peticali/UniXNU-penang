@@ -70,6 +70,7 @@ DEVICE_MODEL = "penang"
 # is enabled; a PSCI reset 6 s after MMU enable proves that stage.
 panic_screen = false   # its code (0xa27 bytes with upstream clang) does not fit the kernel padding (0x9d0)
 entry_probe_reset_delay = 6
+entry_probe_reset_after = "_arm_vm_init"   # A/B: froze here before the depac xpac/__KLD fix
 volume = "UNIXNU"
 size_mib = 112   # kernel.macho is 95 MB; keeps the RAM boot image small for the ABL
 loader = "firmware"

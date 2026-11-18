@@ -8,6 +8,7 @@
      retaa/retab -> ret            braa/brab Rn,Rm -> br Rn     blraa/blrab Rn,Rm -> blr Rn
      braaz/brabz Rn -> br Rn       blraaz/blrabz Rn -> blr Rn   eretaa/eretab -> eret
      pac*/aut*/xpac* (data-processing, register form) -> nop   (pointers are never signed: nothing to strip)
+     sb -> isb
    The hint-space forms (paciasp, autibsp, pacia1716...) are architectural NOPs on such a CPU and stay.
    ldraa/ldrab and pacga have no 1:1 equivalent and stop the tool if present.
 2. Pointers: every DYLD_CHAINED_PTR_64_KERNEL_CACHE (format 8) fixup with isAuth=1 becomes a plain rebase to the
@@ -36,7 +37,10 @@ def rewrite(i):
     m2 = i & 0xfffffc1f
     if m2 in (0xd61f081f, 0xd61f0c1f): return 0xd61f0000 | rn << 5, 'br'
     if m2 in (0xd63f081f, 0xd63f0c1f): return 0xd63f0000 | rn << 5, 'blr'
-    if i & 0xffffc000 == 0xdac10000: return 0xd503201f, 'nop'
+    # pacia..autdzb (opcode 0x00-0x0f) and xpaci/xpacd (0x10, 0x11: bit 14 set, which 0xffffc000 used to miss)
+    if i & 0xffff0000 == 0xdac10000 and (i >> 10) & 0x3f <= 0x11: return 0xd503201f, 'nop'
+    # sb (FEAT_SB, not on A76/A55) -> isb, the closest single-instruction barrier
+    if i == 0xd50330ff: return 0xd5033fdf, 'sb-isb'
     if (i & 0xff200400) in (0xf8200400, 0xf8a00400): raise SystemExit('ldraa/ldrab at an instruction: no 1:1 rewrite')
     # pacga Xd, Xn, Xm -> mov Xd, xzr: every generic signature is 0, so signing and checking still agree.
     if i & 0xffe0fc00 == 0x9ac03000: return 0xaa1f03e0 | (i & 31), 'pacga-zero'
@@ -95,7 +99,10 @@ for name, fo in entries:
             for k in range(struct.unpack_from('<I', kc, p + 64)[0]):
                 q = p + 72 + 80 * k
                 addr, size, off = struct.unpack_from('<QQI', kc, q + 32)
-                if struct.unpack_from('<I', kc, q + 64)[0] & 0x80000400:
+                # code sections: flagged as instructions, or a __text of an executable segment (__KLD,__text has
+                # flags 0 and holds braa/blraa/retab/aut*)
+                if struct.unpack_from('<I', kc, q + 64)[0] & 0x80000400 or (
+                        kc[q:q + 16].split(b'\0')[0] == b'__text' and struct.unpack_from('<i', kc, p + 60)[0] & 4):
                     for j in range(off, off + size, 4):
                         new, kind = rewrite(struct.unpack_from('<I', kc, j)[0])
                         if new is not None:
