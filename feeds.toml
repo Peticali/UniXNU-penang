@@ -3,4 +3,4 @@ name = "sm4350"
 kind = "soc"
 git = "https://github.com/Peticali/UniXNU-sm4350-common"
 # Replace with a reviewed 40-character commit from the selected SoC repository.
-commit = "f3ab68ab43f754568af2ea52b54445f81590bba0"
+commit = "eb0b02dc7beb04d496c941d78b679ad3e57042a7"
