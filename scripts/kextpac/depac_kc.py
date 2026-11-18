@@ -17,7 +17,7 @@ The Mach-O header's cpusubtype stays arm64e (the loader's choice is separate).
 Written for the penang port. The 1:1 rewrite rules are the ones of IOS-26-Hot's tools/de-pac-arm64e.py
 (https://github.com/nithinyadavamaraboina-online/IOS-26-Hot, MIT, Copyright (c) 2026 dipa-studio), which de-PACs
 the userland; this tool adds the kernelcache fileset walk and the chained-fixup auth bits."""
-import struct, sys, collections
+import struct, sys, collections, hmac, hashlib
 
 src, dst = sys.argv[1], sys.argv[2]
 only = sys.argv[sys.argv.index('--only') + 1:] if '--only' in sys.argv else None
@@ -58,6 +58,24 @@ for name, fo in entries:
     if (only and name not in only) or name == 'com.apple.kernel':
         continue                                    # (the kernel itself is replaced by the native one)
     nc = struct.unpack_from('<I', kc, fo + 16)[0]
+    # corecrypto's FIPS POST checks HMAC-SHA256 (one zero-byte key) of its __TEXT_EXEC,__text against __fips_hmacs:
+    # remember the field if it covers the original bytes, and seal the rewritten ones below (as XnuPrelink reseals).
+    sect = {}
+    p = fo + 32
+    for _ in range(nc):
+        cmd, sz = struct.unpack_from('<II', kc, p)
+        if cmd == 0x19:
+            for k in range(struct.unpack_from('<I', kc, p + 64)[0]):
+                q = p + 72 + 80 * k
+                sname, segname = (kc[q + o:q + o + 16].split(b'\0')[0].decode() for o in (0, 16))
+                sect[(segname, sname)] = struct.unpack_from('<QQI', kc, q + 32)
+        p += sz
+    seal = None
+    if ('__TEXT_EXEC', '__text') in sect and any(n == '__fips_hmacs' for _, n in sect):
+        _, tsize, toff = sect[('__TEXT_EXEC', '__text')]
+        _, hsize, hoff = next(v for (_, n), v in sect.items() if n == '__fips_hmacs')
+        if hsize == 32 and hmac.new(b'\0', bytes(kc[toff:toff + tsize]), hashlib.sha256).digest() == bytes(kc[hoff:hoff + 32]):
+            seal = (toff, tsize, hoff)
     p = fo + 32
     for _ in range(nc):
         cmd, sz = struct.unpack_from('<II', kc, p)
@@ -72,6 +90,10 @@ for name, fo in entries:
                             struct.pack_into('<I', kc, j, new)
                             done[kind] += 1
         p += sz
+    if seal:
+        toff, tsize, hoff = seal
+        kc[hoff:hoff + 32] = hmac.new(b'\0', bytes(kc[toff:toff + tsize]), hashlib.sha256).digest()
+        done['fips-reseal'] += 1
 print('code:', dict(done))
 
 base = min(s[0] for s in segs)

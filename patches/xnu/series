@@ -1,2 +1,9 @@
 # Board patch paths, one per line in application order.
+# UniXNU's ipados-27.0.1-24A446 os series, minus zzz-boot-progress (SM8550 only):
+arch:../../../patches/xnu-12377/darwin26-syscalls.patch
+arch:../../../patches/xnu-12377/darwin26-kpi.patch
+arch:../../../patches/xnu-12377/darwin26-shared-region.patch
+# penang:
 nopac-fileset-unmapped-strip.patch
+nopac-arm64-kernel-ldflags.patch
+upstream-clang-ptrauth-3args.patch

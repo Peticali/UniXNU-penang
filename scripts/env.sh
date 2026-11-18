@@ -3,5 +3,7 @@
 export UNIXNU_TOOLCHAIN=${UNIXNU_TOOLCHAIN:-/mnt/nvme/xnu-build/unixnu/toolchain/prefix}
 export PATH="$UNIXNU_TOOLCHAIN/bin:$PATH"
 export TMPDIR=${TMPDIR:-/mnt/nvme/xnu-build/unixnu/toolchain/tmp}
-# The iPhone12,1 26.6.2 (23G90) IPSW, when this machine has it (otherwise the profile's URL).
-[ -f /mnt/nvme/xnu-build/ios26/ipsw/iPhone12,1_26.6.2_23G90_Restore.ipsw ] && export UNIXNU_IPSW=${UNIXNU_IPSW:-/mnt/nvme/xnu-build/ios26/ipsw/iPhone12,1_26.6.2_23G90_Restore.ipsw}
+
+
+# The profile's original kernelcache (scripts/kextpac/make-kernelcache.sh fetches it; the prelink checks its pin).
+export UNIXNU_KERNELCACHE=${UNIXNU_KERNELCACHE:-/mnt/nvme/xnu-build/ios26/kc/24A446__iPad17,3/24A446__iPad17,1_2_3_4/kernelcache.release.iPad17,1_2_3_4}

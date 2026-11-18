@@ -1,0 +1,12 @@
+--- a/makedefs/MakeInc.def	2026-11-18 05:00:01.895418472 -0300
++++ b/makedefs/MakeInc.def	2026-11-18 05:00:01.908300833 -0300
+@@ -1133,6 +1133,9 @@
+ 	-Wl,-threaded_starts_section
+ endif
+ 
++# UniXNU-penang: a plain arm64 kernel (no PAC) links like the arm64e one, so XnuPrelink can place it
++LDFLAGS_KERNEL_ONLY_SUBARCH_arm64 = $(LDFLAGS_KERNEL_ONLY_SUBARCH_arm64e)
++
+ LDFLAGS_KERNEL_ONLY_SUBARCH_x86_64 = \
+ 	-Wl,-add_split_seg_info \
+ 	-Wl,-kernel

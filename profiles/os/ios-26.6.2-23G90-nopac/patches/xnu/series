@@ -1,2 +1,0 @@
-# OS patch paths for xnu-12377.121.6, one per line in application order.
-# zzz-boot-progress.patch: needs the SM8550 (sheng) PMGR and offline probe patches; not for SM4350
