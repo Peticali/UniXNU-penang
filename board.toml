@@ -70,7 +70,7 @@ DEVICE_MODEL = "penang"
 # is enabled; a PSCI reset 6 s after MMU enable proves that stage.
 panic_screen = false   # its code (0xa27 bytes with upstream clang) does not fit the kernel padding (0x9d0)
 entry_probe_reset_delay = 6
-entry_probe_reset_after = "_phys_carveout_init"   # past THREAD_CALL in kernel_bootstrap_thread; froze before PE_init_iokit
+entry_probe_reset_after = "_kdp_init"   # past phys_carveout_init; left: kdp_init, alternate_debugger_init, upto SYSCTL, early_random
 entry_probe_reset_in = "_kernel_bootstrap_thread"
 entry_probe_reset_before = false
 volume = "UNIXNU"
