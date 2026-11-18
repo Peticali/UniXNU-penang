@@ -1,0 +1,17 @@
+--- a/osfmk/kern/startup.c
++++ b/osfmk/kern/startup.c
+@@ -820,6 +820,14 @@
+ 	 * This will start displaying progress to the user, start as early as possible
+ 	 */
+ 	initialize_screen(NULL, kPEAcquireScreen);
++	/*
++	 * penang has no UART: keep XNU's text console on the framebuffer. DarwinBoot fills boot_args.Video, so the
++	 * acquire above runs gc_enable(FALSE) and every later kprintf/IOLog is dropped. kPETextScreen turns the text
++	 * console back on (the vermeer port's framebuffer-console fix; Apple's own switch, unused on ARM). The switch to
++	 * the video console first keeps kPETextScreen off its serial early-out.
++	 */
++	switch_to_video_console();
++	initialize_screen(NULL, kPETextScreen);
+ 
+ 	/*
+ 	 *	Initialize the shared region module.

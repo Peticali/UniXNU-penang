@@ -79,7 +79,7 @@ volume = "UNIXNU"
 size_mib = 112   # kernel.macho is 95 MB; keeps the RAM boot image small for the ABL
 loader = "firmware"
 title = "UniXNU"
-kernel_args = ["-v", "serial=3", "use_contiguous_hint=0"]   # 4K kernel in a fileset laid out on 16K boundaries: arm_vm_init.c:1107 hint-change assert on late protection changes
+kernel_args = ["-v", "serial=3", "use_contiguous_hint=0", "kt_fixed_zones=120", "-no_slto_panic"]   # 4K kernel in a fileset laid out on 16K boundaries: arm_vm_init.c:1107 hint-change assert on late protection changes
 
 [package]
 # The UniXNU checkout, relative to this repository: scripts/package.sh reads it.
@@ -127,3 +127,8 @@ ramdisk_compression = "uefi-chunks"
 # iBoot's CTRR policy: 0 = the SoC has no CTRR, kernel text is not hardware-locked (as the reference board). Without it
 # ml_unsafe_kernel_text_init leaves its flag unset and sdt_init asserts at machine_routines.c:3385 during bsd_init.
 "kernel-ctrr-to-be-enabled" = 0
+
+["adt"."defaults"."u32"]
+# No ApplePMGRNub will appear (no Apple power manager): without it AMFI waits for one and panics "AMFI: No PMGR"
+# (ConfigurationSettings.cpp:392), as UniXNU's vermeer record documents.
+"vmm-present" = 1

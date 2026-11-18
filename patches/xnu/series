@@ -9,3 +9,4 @@ native-4k-stack-shift.patch
 nopac-fileset-unmapped-strip.patch
 nopac-arm64-kernel-ldflags.patch
 upstream-clang-ptrauth-3args.patch
+penang-framebuffer-console.patch

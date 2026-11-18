@@ -1,8 +1,8 @@
 diff --git a/fixtures/fileset-24A446-symbols.json b/fixtures/fileset-24A446-symbols.json
-index bcc5ee9..9c11f1a 100644
+index bcc5ee9..fc2ff08 100644
 --- a/fixtures/fileset-24A446-symbols.json
 +++ b/fixtures/fileset-24A446-symbols.json
-@@ -1095,6 +1095,1021 @@
+@@ -1095,6 +1095,1049 @@
        "original_sha256": "461f0cd8c82fda303d244bd2e7d866dfa0a3a0e88e4e29eeaa32547988cb1a92",
        "native_symbol": "_ml_io_read8",
        "evidence": "Loads and returns one byte at x0. Directly precedes ml_io_read16, ml_io_read32 and ml_io_read64, which have the same shape for their widths. Source osfmk/arm64/machine_routines.c ml_io_read8; the native development build adds its timing checks around the same read."
@@ -1021,10 +1021,38 @@ index bcc5ee9..9c11f1a 100644
 +      "original_sha256": "e064deac31b0475382e8124a1a8f35cbcb924e070ab43505cd597dda6e01f4db",
 +      "native_symbol": "_IOSetCoreAnalyticsSendEventProc",
 +      "evidence": "Stores the given callback in a global and returns 0, or returns kIOReturnNotPermitted (0xe00002e2) when one is set already. Source: iokit/Kernel/IOService.cpp IOSetCoreAnalyticsSendEventProc (gIOCoreAnalyticsSendEventProc). Imported by CoreAnalyticsFamily's start, which registers its send-event function (panic on the device)."
++    },
++    {
++      "original": "0xfffffe000b46efc4",
++      "original_size": 16,
++      "original_sha256": "a3106aa780e528d7b8db5f48a12e2dcbd26cf8df07a08e3761e5ae7fdde70fb4",
++      "native_symbol": "__ZN9IOService11getPlatformEv",
++      "evidence": "Getter returning one global (bti; adrp; ldr x0; ret), the run of four getters that ends right before IOService::setPlatform (0xfffffe000b46f004, paired): in native order getPlatform, getPMRootDomain, getResourceService, getSystemStateNotificationService, then setPlatform. Position 1 of 4. Source: iokit/Kernel/IOService.cpp. AppleMobileFileIntegrity called the first one from a thread call (panic on the device)."
++    },
++    {
++      "original": "0xfffffe000b46efd4",
++      "original_size": 16,
++      "original_sha256": "bec356c68d9017bdbfe210f17ad258f849db8014a4e438c45f6f9dfea4d7a1e9",
++      "native_symbol": "__ZN9IOService15getPMRootDomainEv",
++      "evidence": "Getter returning one global (bti; adrp; ldr x0; ret), the run of four getters that ends right before IOService::setPlatform (0xfffffe000b46f004, paired): in native order getPlatform, getPMRootDomain, getResourceService, getSystemStateNotificationService, then setPlatform. Position 2 of 4. Source: iokit/Kernel/IOService.cpp. AppleMobileFileIntegrity called the first one from a thread call (panic on the device)."
++    },
++    {
++      "original": "0xfffffe000b46efe4",
++      "original_size": 16,
++      "original_sha256": "8465389782e19f1bb119e860648c4f4964c39c2e3064f6671e2039e6573d0122",
++      "native_symbol": "__ZN9IOService18getResourceServiceEv",
++      "evidence": "Getter returning one global (bti; adrp; ldr x0; ret), the run of four getters that ends right before IOService::setPlatform (0xfffffe000b46f004, paired): in native order getPlatform, getPMRootDomain, getResourceService, getSystemStateNotificationService, then setPlatform. Position 3 of 4. Source: iokit/Kernel/IOService.cpp. AppleMobileFileIntegrity called the first one from a thread call (panic on the device)."
++    },
++    {
++      "original": "0xfffffe000b46eff4",
++      "original_size": 16,
++      "original_sha256": "1c44519496e022b6548fb62ead2861ef6b39abc75faa1981321af97badd56c69",
++      "native_symbol": "__ZN9IOService33getSystemStateNotificationServiceEv",
++      "evidence": "Getter returning one global (bti; adrp; ldr x0; ret), the run of four getters that ends right before IOService::setPlatform (0xfffffe000b46f004, paired): in native order getPlatform, getPMRootDomain, getResourceService, getSystemStateNotificationService, then setPlatform. Position 4 of 4. Source: iokit/Kernel/IOService.cpp. AppleMobileFileIntegrity called the first one from a thread call (panic on the device)."
      }
    ],
    "data": [
-@@ -1271,6 +2286,24 @@
+@@ -1271,6 +2314,24 @@
        "native_symbol": "_gPESerialBaud",
        "addend": 0,
        "evidence": "32-bit global holding -1 in the original image. IOSerialFamily reads it when it sets a new tty up, takes 9600 when it is -1 and stores the result in t_ispeed and t_ospeed. Source pexpert/gen/pe_gen.c int32_t gPESerialBaud = -1, exported in config/Unsupported.exports; the kernel itself has no reader in the original image."
