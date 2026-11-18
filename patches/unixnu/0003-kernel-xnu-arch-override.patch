@@ -1,5 +1,5 @@
 diff --git a/scripts/unixnu/kernel.py b/scripts/unixnu/kernel.py
-index 7858f42..c886d0a 100644
+index 7858f42..13e3830 100644
 --- a/scripts/unixnu/kernel.py
 +++ b/scripts/unixnu/kernel.py
 @@ -72,7 +72,10 @@ def version_env(modules, ctx=None):
@@ -13,4 +13,21 @@ index 7858f42..c886d0a 100644
 +                                  or load_toml(ctx.profile_roots['arch'] / 'profile.toml').get('arch', {}).get('name', 'arm64'))
      return env
  
+ 
+@@ -99,12 +102,14 @@ def linux_env(ctx):
+         if not path.exists():
+             raise Error(f'{path} missing; run "sudo scripts/linux/setup-toolchain.py {toolchain}"')
+     fakeroot = ctx.tree / '.cache/fakeroot'
++    # The deployment target follows the OS profile (iOS 17 by default; an arm64 build of the iOS 26 series needs 26.0).
++    sdk_version = '17.0' if ctx.board.get('kernel', {}).get('xnu_arch') is None else ctx.board.get('os', {}).get('ios_version', '17.0')
+     return {'PATH': os.pathsep.join([str(clt / 'bin'), str(toolchain / 'bin'), os.environ.get('PATH', '')]),
+             'LC_ALL': 'C', 'CLT_PREFIX': str(clt), 'XCTOOLCHAIN_PREFIX': str(xctoolchain),
+             'XNU_TOOLCHAIN_BIN': f'{clt / "bin"} {xctoolchain / "bin"}',
+-            'UNIXNU_SDKROOT': str(fakeroot), 'UNIXNU_SDK_VERSION': '17.0',
++            'UNIXNU_SDKROOT': str(fakeroot), 'UNIXNU_SDK_VERSION': sdk_version,
+             'UNIXNU_PLATFORM_PATH': str(fakeroot / 'Platforms/iPhoneOS.platform'),
+-            'CROSS_CLANG': str(toolchain / 'llvm/bin/clang'), 'DARWIN_TRIPLE': 'arm64-apple-ios17.0',
++            'CROSS_CLANG': str(toolchain / 'llvm/bin/clang'), 'DARWIN_TRIPLE': f'arm64-apple-ios{sdk_version}',
+             'CROSS_EXTRA_FLAGS': '-mllvm -disable-atexit-based-global-dtor-lowering',
+             'CCC_OVERRIDE_OPTIONS': '# +-Wno-missing-designated-field-initializers +-Wno-unused-but-set-global'}
  
