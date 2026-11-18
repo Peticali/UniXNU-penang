@@ -1,0 +1,12 @@
+# original (23G90 kernelcache, Apple kernel)  native symbol   (identified by disassembly, kextpac POC)
+0xfffffff009d5cab0 _memmove
+0xfffffff009d5cc60 _bzero
+0xfffffff009d5cd10 _memset
+0xfffffff009dbfe54 _kalloc_data_external
+0xfffffff009dc058c _kfree_data_external
+0xfffffff009dc05a0 _kfree_data_addr_external
+0xfffffff00a445bd8 _IOMallocTypeImpl
+0xfffffff00a445de8 _IOFreeTypeImpl
+0xfffffff00a4462e4 _IOMallocTypeVarImpl
+0xfffffff00a4462f8 _IOFreeTypeVarImpl
+0xfffffff00a835000 ___stack_chk_guard data
