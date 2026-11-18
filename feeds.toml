@@ -1,0 +1,6 @@
+[[source]]
+name = "sm4350"
+kind = "soc"
+git = "file:///mnt/nvme/xnu-build/unixnu/UniXNU-sm4350-common"  # local until published
+# Replace with a reviewed 40-character commit from the selected SoC repository.
+commit = "d7bbeabe4d5304ce02b93d8276f5834c2b869117"

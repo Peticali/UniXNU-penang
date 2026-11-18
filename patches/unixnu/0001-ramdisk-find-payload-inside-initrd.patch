@@ -1,0 +1,41 @@
+diff --git a/package/UniXNUPkg/Driver/UniXNURamDiskDxe/UniXNURamDiskDxe.c b/package/UniXNUPkg/Driver/UniXNURamDiskDxe/UniXNURamDiskDxe.c
+index 9541009..58d558d 100644
+--- a/package/UniXNUPkg/Driver/UniXNURamDiskDxe/UniXNURamDiskDxe.c
++++ b/package/UniXNUPkg/Driver/UniXNURamDiskDxe/UniXNURamDiskDxe.c
+@@ -246,6 +246,36 @@ PublishInitrd (
+     return;
+   }
+ 
++  //
++  // PENANG (moto g53): its ABL concatenates vendor_boot's ramdisk BEFORE the boot image's, so the payload starts somewhere
++  // inside the initrd, 4-byte aligned. When the start is neither a packed payload nor a FAT boot sector, find either one.
++  //
++  {
++    CONST UINT8  *Base = (CONST UINT8 *)(UINTN)Start;
++    UINT64       Length = End - Start;
++    BOOLEAN      Found = FALSE;
++
++    if (!((Length >= 8) && (CompareMem (Base, "UNXNFAT1", 8) == 0)) &&
++        !((Length >= 512) && (Base[510] == 0x55) && (Base[511] == 0xAA) && ((Base[0] == 0xEB) || (Base[0] == 0xE9))))
++    {
++      for (UINT64 Offset = 4; Offset + 512 <= Length; Offset += 4) {
++        CONST UINT8  *At = Base + Offset;
++        BOOLEAN      Packed = (CompareMem (At, "UNXNFAT1", 8) == 0);
++        BOOLEAN      Fat = (At[510] == 0x55) && (At[511] == 0xAA) && ((At[0] == 0xEB) || (At[0] == 0xE9)) &&
++                           ((CompareMem (At + 54, "FAT", 3) == 0) || (CompareMem (At + 82, "FAT", 3) == 0));
++        if (Packed || Fat) {
++          DEBUG ((DEBUG_ERROR, "UNIXNURAMDISK: payload at initrd +0x%lx (%a)\n", Offset, Packed ? "packed" : "FAT"));
++          Start += Offset;
++          Found = TRUE;
++          break;
++        }
++      }
++      if (!Found) {
++        DEBUG ((DEBUG_ERROR, "UNIXNURAMDISK: no payload inside the initrd 0x%lx-0x%lx\n", Start, End));
++      }
++    }
++  }
++
+   mRamBase = (UINT8 *)(UINTN)Start;
+   mSourceBytes = (UINTN)(End - Start);
+   mLogicalBytes = End - Start;
