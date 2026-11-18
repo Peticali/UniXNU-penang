@@ -1,8 +1,8 @@
 diff --git a/fixtures/fileset-24A446-symbols.json b/fixtures/fileset-24A446-symbols.json
-index bcc5ee9..041dccf 100644
+index bcc5ee9..bae6e1a 100644
 --- a/fixtures/fileset-24A446-symbols.json
 +++ b/fixtures/fileset-24A446-symbols.json
-@@ -1095,6 +1095,1014 @@
+@@ -1095,6 +1095,1021 @@
        "original_sha256": "461f0cd8c82fda303d244bd2e7d866dfa0a3a0e88e4e29eeaa32547988cb1a92",
        "native_symbol": "_ml_io_read8",
        "evidence": "Loads and returns one byte at x0. Directly precedes ml_io_read16, ml_io_read32 and ml_io_read64, which have the same shape for their widths. Source osfmk/arm64/machine_routines.c ml_io_read8; the native development build adds its timing checks around the same read."
@@ -1014,10 +1014,17 @@ index bcc5ee9..041dccf 100644
 +      "original_sha256": "40f92329017dfea266e551ac4dbe4db543e3532c7f8760d6755d2d81b86bd4e6",
 +      "native_symbol": "__ZN21IOInterruptController17registerInterruptEP9IOServiceiPvPFvS2_S2_S2_iES2_",
 +      "evidence": "Same slot of paired vtables: every slot of these vtables whose original function the prelink map already pairs holds that same native function, so the layouts agree and this slot names the stubbed original. Proposed by UniXNU-penang scripts/pair-vtables.py."
++    },
++    {
++      "original": "0xfffffe000b46d2a4",
++      "original_size": 44,
++      "original_sha256": "e064deac31b0475382e8124a1a8f35cbcb924e070ab43505cd597dda6e01f4db",
++      "native_symbol": "_IOSetCoreAnalyticsSendEventProc",
++      "evidence": "Stores the given callback in a global and returns 0, or returns kIOReturnExclusiveAccess (0xe00002e2) when one is set already. Source: iokit/Kernel/IOService.cpp IOSetCoreAnalyticsSendEventProc (gIOCoreAnalyticsSendEventProc). Imported by CoreAnalyticsFamily's start, which registers its send-event function (panic on the device)."
      }
    ],
    "data": [
-@@ -1271,6 +2279,24 @@
+@@ -1271,6 +2286,24 @@
        "native_symbol": "_gPESerialBaud",
        "addend": 0,
        "evidence": "32-bit global holding -1 in the original image. IOSerialFamily reads it when it sets a new tty up, takes 9600 when it is -1 and stores the result in t_ispeed and t_ospeed. Source pexpert/gen/pe_gen.c int32_t gPESerialBaud = -1, exported in config/Unsupported.exports; the kernel itself has no reader in the original image."
