@@ -27,9 +27,10 @@ archives = [
   "build-software-aes-bindings.py",
   "build-mockfs-fixture.py",
   "build-libpthread-kernel.py",
-  # The symbol-bearing RELEASE comparison kernel the iPadOS 27 prelink pairs through (as UniXNU-sheng).
-  # Without --lto: the Linux ld64 (cctools-port, built --disable-lto-support) cannot link LLVM bitcode.
-  "build-fileset-release-reference.py --tree .",
+  # The symbol-bearing RELEASE comparison kernel the iPadOS 27 prelink pairs through (as UniXNU-sheng), with LTO
+  # like Apple's kernel: the non-LTO one left 1955 stubbed functions (profile baseline: 24) and corecrypto panicked
+  # calling mach_absolute_time. Needs scripts/setup-ld64-lto.sh (LTO ld64 + libLTO of the toolchain's LLVM).
+  "/mnt/nvme/xnu-build/unixnu/UniXNU-penang/scripts/build-reference-lto.py --tree .",
 ]
 
 [device_tree]
