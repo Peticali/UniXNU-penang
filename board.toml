@@ -1,11 +1,10 @@
 schema_version = 2
 
 [board]
-example = true   # until the kernel, payload and driver inputs below are complete
 name = "penang"
 soc = "SM4350"
 soc_source = "sm4350"
-os_profile = "ipados-17.7.11-21H461"
+os_profile = "ios-26.6.2-23G90-nopac"
 description = "Motorola moto g53 5G (XT2335, SM4350 holi): iOS 26 without PAC"
 kit = "penang"
 
@@ -64,7 +63,7 @@ kernel_args = ["-v", "serial=3"]
 unixnu = "../UniXNU"
 
 [package.defconfig]
-"ipados-17.7.11-21H461" = "penang_defconfig"
+"ios-26.6.2-23G90-nopac" = "penang_defconfig"
 # A second OS profile of the same branch: only the values that differ, merged over the
 # board, with remove listing the dotted keys the board sets and this profile does not.
 # [os_overrides."ipados-26.5.2-23F84".kernel]
