@@ -1,0 +1,70 @@
+--- a/osfmk/kern/startup.c	2026-11-18 13:43:29.549185294 -0300
++++ b/osfmk/kern/startup.c	2026-11-18 13:43:29.557934315 -0300
+@@ -215,10 +215,67 @@
+ 	penang_psci_reset();
+ }
+ 
++/*
++ * penang: make the PMIC treat PS_HOLD as a warm reset, as Android's qpnp-power-on does before it reboots. Left at the
++ * boot loaders' setting, every reset of ours (PSCI SYSTEM_RESET, SYSTEM_RESET2) is a PMIC hard reset ("Power-on
++ * reason: Triggered from Hard Reset and 'cold' boot"): the rails drop, DDR loses bits, and the persistent console
++ * ring loses its header with them (u27-sysos2..4). A warm reset keeps DDR in self-refresh.
++ * pm6125 (SID 0) PON at 0x800, ppid 0x008: PS_HOLD_RESET_CTL 0x85a (type in bits 3:0, 1 = warm reset) and
++ * PS_HOLD_RESET_CTL2 0x85b (bit 7 enable), written disable / type / enable as qpnp_pon_reset_config does. SPMI PMIC
++ * arbiter v5: core 0x1c40000 (APID map at +0x900), channels 0x1e00000 and observer 0x3e00000, 0x10000 per APID.
++ */
++static uint32_t
++penang_spmi_cmd(volatile uint32_t *chan, uint32_t opcode, uint8_t reg, uint8_t *value)
++{
++	if (opcode == 0) {
++		chan[0x10 / 4] = *value;                                /* WDATA0 */
++	}
++	chan[0] = (opcode << 27) | ((uint32_t)reg << 4);        /* CMD: one byte (bc 0) */
++	for (int i = 0; i < 10000; i++) {
++		uint32_t status = chan[0x8 / 4];
++		if (status) {
++			if (opcode == 1) {
++				*value = (uint8_t)chan[0x18 / 4];       /* RDATA0 */
++			}
++			return status;                                  /* 1 done; 2 denied, 4 failure, 8 dropped */
++		}
++		delay(1);
++	}
++	return 0;
++}
++
++static void
++penang_pmic_warm_reset(void)
++{
++	volatile uint32_t *core = (volatile uint32_t *)ml_io_map(0x1c40000ULL, 0x1100);
++	uint32_t apid;
++	for (apid = 0; apid < 512; apid++) {
++		if ((core[(0x900 / 4) + apid] & 0xfff) == 0x008) {
++			break;
++		}
++	}
++	if (apid == 512) {
++		printf("penang: PON ppid 0x008 not in the SPMI APID map: PS_HOLD left as it is\n");
++		return;
++	}
++	volatile uint32_t *wr = (volatile uint32_t *)ml_io_map(0x1e00000ULL + 0x10000ULL * apid, 0x100);
++	volatile uint32_t *rd = (volatile uint32_t *)ml_io_map(0x3e00000ULL + 0x10000ULL * apid, 0x100);
++	uint8_t before = 0, after = 0, off = 0x00, warm = 0x01, on = 0x80;
++	uint32_t s0 = penang_spmi_cmd(rd, 1, 0x5a, &before);
++	uint32_t s1 = penang_spmi_cmd(wr, 0, 0x5b, &off);
++	delay(500);                                             /* at least 10 sleep clock cycles */
++	uint32_t s2 = penang_spmi_cmd(wr, 0, 0x5a, &warm);
++	uint32_t s3 = penang_spmi_cmd(wr, 0, 0x5b, &on);
++	uint32_t s4 = penang_spmi_cmd(rd, 1, 0x5a, &after);
++	printf("penang: PMIC PS_HOLD reset type 0x%x -> 0x%x (apid %u, spmi status %x %x %x %x %x)\n",
++	    before, after, apid, s0, s1, s2, s3, s4);
++}
++
+ static void
+ penang_pram_start(void)
+ {
+ 	uint32_t seconds = 0;
++	penang_pmic_warm_reset();
+ 	if (PE_parse_boot_argn("penang-autoreset", &seconds, sizeof(seconds)) && seconds > 0) {
+ 		thread_t thread;
+ 		if (kernel_thread_start(penang_autoreset_thread, (void *)(uintptr_t)seconds, &thread) == KERN_SUCCESS) {

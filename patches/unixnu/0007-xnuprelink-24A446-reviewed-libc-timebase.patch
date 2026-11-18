@@ -1,8 +1,8 @@
 diff --git a/fixtures/fileset-24A446-symbols.json b/fixtures/fileset-24A446-symbols.json
-index bcc5ee9..61ebfa7 100644
+index bcc5ee9..cf6fd28 100644
 --- a/fixtures/fileset-24A446-symbols.json
 +++ b/fixtures/fileset-24A446-symbols.json
-@@ -1095,6 +1095,1238 @@
+@@ -1095,6 +1095,1469 @@
        "original_sha256": "461f0cd8c82fda303d244bd2e7d866dfa0a3a0e88e4e29eeaa32547988cb1a92",
        "native_symbol": "_ml_io_read8",
        "evidence": "Loads and returns one byte at x0. Directly precedes ml_io_read16, ml_io_read32 and ml_io_read64, which have the same shape for their widths. Source osfmk/arm64/machine_routines.c ml_io_read8; the native development build adds its timing checks around the same read."
@@ -1238,10 +1238,241 @@ index bcc5ee9..61ebfa7 100644
 +      "original_sha256": "f8c08050bf20ab13dacd593298de097ef091f55c589810c9178915856f85c5dd",
 +      "native_symbol": "_PE_enter_debugger",
 +      "evidence": "Compile order: between paired neighbours _pe_init_debug and _PE_i_can_has_kernel_configuration the original and the native kernel hold the same number (1) of unpaired functions; this is position 1. Sizes agree within 4x and all 0 of its references the prelink map already pairs appear in the native function. Proposed by UniXNU-penang scripts/pair-gaps.py."
++    },
++    {
++      "original": "0xfffffe000b46d268",
++      "original_size": 60,
++      "original_sha256": "d2926f85cc1c50dfcee64f6835c60e37a868a779bcd4d0d1f533246909159d01",
++      "native_symbol": "__ZNK9IOService10isInactiveEv",
++      "evidence": "u27-root1 (2026-11-18): IOStorageFamily +0xfa6c called it during scheduleTerminatePhase2/actionWillStop. Original: ldr vtable (disc 0xcda1), blraa slot 0x298 (getState, disc 0xc90d), and w0,w0,#1, retab = RELEASE reference __ZNK9IOService10isInactiveEv instruction for instruction."
++    },
++    {
++      "original": "0xfffffe000b525170",
++      "original_size": 248,
++      "original_sha256": "91ff03eaca0514f55471e3ee842507cba5c95b9436b4fa3adba241f4d2ca322d",
++      "native_symbol": "__ZN19IOPerfControlClient15copyWorkContextEv",
++      "evidence": "u27-pac1 (2026-11-18): IOStorageFamily +0x5584 called it from probeCandidates. Original: kalloc_ext/kalloc_type of 0x50 bytes (zone size & 0xfffff0 >= 80), retain 1, vtable __ZTV24IOPerfControlWorkContext (prelink data map), metaclass count, virtual init, free on failure = RELEASE reference __ZN19IOPerfControlClient15copyWorkContextEv."
++    },
++    {
++      "original": "0xfffffe000ad94128",
++      "original_size": 16,
++      "original_sha256": "486f0d0485670e933a6986389c215972ab15ae46a265bfa627f24f6f43ee3ab1",
++      "native_symbol": "_thread_tid",
++      "evidence": "2026-11-18 root-mount path (u27-pac*): pair-neighbours: cbz x0; ldr x0,[x0,#off] right after _thread_set_cpulimit, same shape and position in the RELEASE reference"
++    },
++    {
++      "original": "0xfffffe000b267280",
++      "original_size": 16,
++      "original_sha256": "0f4c5f30ff56aa1624912fc973f089c5b5ea83e13b4b2c8b668ba92368671512",
++      "native_symbol": "_proc_is_forcing_hfs_case_sensitivity",
++      "evidence": "2026-11-18 root-mount path (u27-pac*): pair-neighbours: ldrh [x0,#0x616] & 1, position #0 after _proc_is_third_party_debuggable_driver as in the reference"
++    },
++    {
++      "original": "0xfffffe000b26732c",
++      "original_size": 16,
++      "original_sha256": "a2b7f414de92f7ba03c49cc6cab085b624e2135bbe123fd2d9a9c03e96293500",
++      "native_symbol": "_proc_allow_low_space_writes",
++      "evidence": "2026-11-18 root-mount path (u27-pac*): pair-neighbours: ldrh [x0,#0x616] ubfx #8 = reference _proc_allow_low_space_writes (symlink_ea is bit 10)"
++    },
++    {
++      "original": "0xfffffe000b26734c",
++      "original_size": 16,
++      "original_sha256": "ae4788f73fe2513c097e2f13df8513f4af4d7ae0684f553be5a8917cf8dc7d57",
++      "native_symbol": "_proc_is_rsr",
++      "evidence": "2026-11-18 root-mount path (u27-pac*): pair-neighbours: ldr [x0,#off] ubfx #2, position #2 after _proc_skip_mtime_update as in the reference"
++    },
++    {
++      "original": "0xfffffe000b2c7da4",
++      "original_size": 24,
++      "original_sha256": "fbfb52d9bfcd022d46a858fc9feb44ebde98cb9ae3610bd9f2b72cde7c83052c",
++      "native_symbol": "_cs_blob_reset_cache",
++      "evidence": "2026-11-18 root-mount path (u27-pac*): pair-neighbours: same shape, position #0 after _ubc_cs_blob_revalidate as in the reference"
++    },
++    {
++      "original": "0xfffffe000b41d158",
++      "original_size": 12,
++      "original_sha256": "b50fe8a1f6bf8076998832a62b68f8eeaa6a572fb9b0f229eb0e6f7ac7e2ac58",
++      "native_symbol": "_uuid_clear",
++      "evidence": "2026-11-18 root-mount path (u27-pac*): pair-neighbours: stp xzr,xzr,[x0]; ret, followed by memcmp(...,16) (uuid_compare) as in libkern uuid.c"
++    },
++    {
++      "original": "0xfffffe000b451b44",
++      "original_size": 12,
++      "original_sha256": "0e5e680cc2fe906f26638d2c620a78df622ac5f02640a2a55a42c167cd880229",
++      "native_symbol": "__ZNK15IORegistryEntry16getPropertyTableEv",
++      "evidence": "2026-11-18 root-mount path (u27-pac*): pair-neighbours: ldr x0,[x0,#32]; ret near IORegistryEntry::makePlane, only same-shape candidate"
++    },
++    {
++      "original": "0xfffffe000b4bcae4",
++      "original_size": 12,
++      "original_sha256": "30a0e2412a771c2aa6b8d5a638bd655640028516d30a4d62e4c49d46ca32f8df",
++      "native_symbol": "__ZN18IOMemoryDescriptor16setMapperOptionsEt",
++      "evidence": "2026-11-18 root-mount path (u27-pac*): pair-neighbours: strh w1,[x0,#64]; ret, position #0 after IOMemoryDescriptor::initialize as in the reference"
++    },
++    {
++      "original": "0xfffffe000b4bcaf0",
++      "original_size": 12,
++      "original_sha256": "2e06bda738ff93c0b332bb8e94d761c0de490fb72f0705aaa773b3f1b9653a10",
++      "native_symbol": "__ZN18IOMemoryDescriptor16getMapperOptionsEv",
++      "evidence": "2026-11-18 root-mount path (u27-pac*): pair-neighbours: ldrh w0,[x0,#64]; ret, position #1 after IOMemoryDescriptor::initialize as in the reference"
++    },
++    {
++      "original": "0xfffffe000b54c0bc",
++      "original_size": 24,
++      "original_sha256": "4a7c3aed0715f6a07d575cd03fbbc4a6e45aeaa5285a77aedfa57606cb287085",
++      "native_symbol": "_IOPMRootDomainGetWillShutdown",
++      "evidence": "2026-11-18 root-mount path (u27-pac*): pair-neighbours: global != 0, position #2 after IOPMrootDomain operator new as in the reference"
++    },
++    {
++      "original": "0xfffffe000ad4561c",
++      "original_size": 716,
++      "original_sha256": "1f511d7d884ac8193f8d995a7ec4b92e21dd4187c4e2f9f102e3c8fd9c48af6d",
++      "native_symbol": "_lck_rw_lock_shared_to_exclusive",
++      "evidence": "2026-11-18 root-mount path (u27-pac*): pair-callers fingerprint 0.59 (next 0.27), 179 vs 161 insns"
++    },
++    {
++      "original": "0xfffffe000af1f698",
++      "original_size": 1392,
++      "original_sha256": "94027500b81e8f402f40f2437005674dd84fc0b541fed4675f89cef8a17f4fea",
++      "native_symbol": "_vfs_iterate",
++      "evidence": "2026-11-18 root-mount path (u27-pac*): pair-callers fingerprint 0.60 (next 0.34), 348 vs 324 insns"
++    },
++    {
++      "original": "0xfffffe000af2db4c",
++      "original_size": 132,
++      "original_sha256": "f7c84c9e38908e9392e28cbe7123592bef33ce83f6a77915c2e62ef294a2ad03",
++      "native_symbol": "_vnode_attr_authorize_init",
++      "evidence": "2026-11-18 root-mount path (u27-pac*): pair-callers fingerprint 1.00, 33 vs 30 insns"
++    },
++    {
++      "original": "0xfffffe000b3df754",
++      "original_size": 56,
++      "original_sha256": "852b4cd7a1780f34944b80ee731a7bfde49c036075f0087303857b9fe98c4677",
++      "native_symbol": "__ZN12OSDictionary9setObjectEPKcRK11OSSharedPtrIK15OSMetaClassBaseE",
++      "evidence": "2026-11-18 root-mount path (u27-pac*): pair-callers fingerprint 0.67 (next 0.33), 14 vs 15 insns"
++    },
++    {
++      "original": "0xfffffe000b451ca8",
++      "original_size": 64,
++      "original_sha256": "e3b33761e87effda3b45c4a9c73f5560d898d39954740c8335a0f057fbd16e7b",
++      "native_symbol": "__ZN15IORegistryEntry14propertyExistsEPKc",
++      "evidence": "2026-11-18 root-mount path (u27-pac*): pair-callers fingerprint 0.67 (next 0.33), 16 vs 21 insns"
++    },
++    {
++      "original": "0xfffffe000b42183c",
++      "original_size": 200,
++      "original_sha256": "8df06f2a801145f184f0bc8df503293e740bfe6bed44d458595ed9552e9995b1",
++      "native_symbol": "_os_pcpu_ref_init",
++      "evidence": "2026-11-18 root-mount path (u27-pac*): pair-callers fingerprint 0.57 (next 0.29), 50 vs 56 insns, same prologue"
++    },
++    {
++      "original": "0xfffffe000aed453c",
++      "original_size": 16,
++      "original_sha256": "71172895f661134907a943abb30fd96a57f51e4cea1972dbf9cf6e33e5a3f839",
++      "native_symbol": "__get_commpage_priv_address",
++      "evidence": "2026-11-18 u27-pac3: APFS +0x11d818 called it from probeCandidates. Original: adrp+ldr of a global; ret, followed by mov w0,#0; ret = RELEASE reference _get_commpage_priv_address (after commpage_populate and the inlined smfr0 init) followed by _commpage_is_in_pfz64 (8 bytes)."
++    },
++    {
++      "original": "0xfffffe000aebdee4",
++      "original_size": 16,
++      "original_sha256": "7a19bae6d03d743d2533c0a4a80daae82d83cc1f203fead056edf43aaab50ae4",
++      "native_symbol": "_cpu_number",
++      "evidence": "2026-11-18 pair-neighbours: same masked shape at the same position between the same paired neighbours as in the RELEASE reference"
++    },
++    {
++      "original": "0xfffffe000aebdef4",
++      "original_size": 16,
++      "original_sha256": "560bda14a018312ca80f25649beeb2eefdb1d5017a37a5f8120001e903845c24",
++      "native_symbol": "_ml_get_wake_timebase",
++      "evidence": "2026-11-18 pair-neighbours: same masked shape at the same position between the same paired neighbours as in the RELEASE reference"
++    },
++    {
++      "original": "0xfffffe000ad4d090",
++      "original_size": 12,
++      "original_sha256": "7a6e19c0a1c733f7f867d31e962d8f3f2e21ef8a9e9e005fb467c251d1eb12fd",
++      "native_symbol": "_lck_mtx_gate_open",
++      "evidence": "2026-11-18 pair-neighbours: same masked shape at the same position between the same paired neighbours as in the RELEASE reference"
++    },
++    {
++      "original": "0xfffffe000ad4d0ac",
++      "original_size": 12,
++      "original_sha256": "58da13a6911110ea740bff1c5aba0abdd70ee92c705568c03685d35cbacf8c18",
++      "native_symbol": "_lck_mtx_gate_steal",
++      "evidence": "2026-11-18 pair-neighbours: same masked shape at the same position between the same paired neighbours as in the RELEASE reference"
++    },
++    {
++      "original": "0xfffffe000af215f8",
++      "original_size": 116,
++      "original_sha256": "5140e6d5f2d81d948140b986382355b434402c83f5e24a178342f24b4e10fa06",
++      "native_symbol": "_vnode_hold",
++      "evidence": "2026-11-18 u27-pac5: APFS +0xc70a4 called it while exec'ing launchd (bsdinit_task > __mac_execve > vn_rdwr > VNOP_READ > decmpfs > zlib > VNOP_GETXATTR > APFS). Original: add x8,x0,#180; ldadd +1; overflow check vs 0x7fffffff = RELEASE reference _vnode_hold instruction for instruction."
++    },
++    {
++      "original": "0xfffffe000adb7bec",
++      "original_size": 20,
++      "original_sha256": "7d1c24e9e7f2ab11b0893e163dbe55b604c4af4c94a354bab8d18332f295fb74",
++      "native_symbol": "_zalloc_flags",
++      "evidence": "2026-11-18 u27-pac6: AMFI +0x14c3c tail-called it (zone, Z_ZERO) while validating launchd's signature (load_code_signature > ubc_cs_blob_add > mac_vnode_check_signature). Original: mov x2,x1; ldp x8,x1,[x0]; mov x0,x8; b _zalloc_ext = RELEASE reference _zalloc_flags instruction for instruction (pair-callers fingerprint 1.00)."
++    },
++    {
++      "original": "0xfffffe000adb7bc4",
++      "original_size": 20,
++      "original_sha256": "9736f18118f8633c3b4025e5bdc7694cba710da97d224975db75b9120d6e34d9",
++      "native_symbol": "_zalloc",
++      "evidence": "2026-11-18 u27-pac7: APFS +0xc8418 called it. Original: ldp x8,x1,[x0]; mov x0,x8; mov w2,#0; b _zalloc_ext = RELEASE reference _zalloc; the zalloc / zalloc_noblock (flags 1, paired) / zalloc_flags (pinned) wrappers sit together in both."
++    },
++    {
++      "original": "0xfffffe000aebd130",
++      "original_size": 8,
++      "original_sha256": "224d4df0836ae187285a713f6eab38d506f106d5205135a58ab1548d5684fce9",
++      "native_symbol": "_cpu_broadcast_xcall",
++      "evidence": "2026-11-18 global wrapper scan: the original is one tail call to the paired _cpu_broadcast_xcall_internal; the only native reference function with that body is _cpu_broadcast_xcall (pair-neighbours also placed it 3 after _cpu_machine_idle_init)."
++    },
++    {
++      "original": "0xfffffe000b4f9f70",
++      "original_size": 248,
++      "original_sha256": "02f29f145ed66604102d9e1c15ae78df3efce6343b40b33198eb579204a829be",
++      "native_symbol": "__ZN16IOSimpleReporter14incrementValueEyx",
++      "evidence": "2026-11-18 u27-pac9: CoreAnalyticsFamily tail-called it (this, channel 'Es...', 1) from AMFI's launch-constraint report (process_signature > mac_proc_check_launch_constraints). Original: lockReporter, virtual getChannelIndex (+200), virtual (+224), add increment; pair-callers fingerprint 1.00 (next 0.52)."
++    },
++    {
++      "original": "0xfffffe000b470f20",
++      "original_size": 240,
++      "original_sha256": "f6d4723d3740f4eb50b6aa6b5d2221917e183f95d7487005e8675715a958e5ba",
++      "native_symbol": "__ZN9IOService15publishResourceEPKcP8OSObject",
++      "evidence": "2026-11-18 CoreAnalyticsFamily import; pair-callers fingerprint 0.89 (next 0.45), 60 vs 75 insns."
++    },
++    {
++      "original": "0xfffffe000b4f4350",
++      "original_size": 156,
++      "original_sha256": "c912ec60d7a77ff28c263e9d96f0ff81c0e355400734c93730520eec75fcca09",
++      "native_symbol": "__ZN17IOSharedDataQueue12withCapacityEj",
++      "evidence": "2026-11-18 u27-pram3: CoreAnalyticsFamily import, reached from AMFI's launch-constraint report. Fingerprint tie (0.88) with IODataQueue::withCapacity broken by the class: the original references __ZN17IOSharedDataQueue10gMetaClassE (prelink data map)."
++    },
++    {
++      "original": "0xfffffe000b49d4ac",
++      "original_size": 48,
++      "original_sha256": "f5fbbbcb875bdd46fb9bcf6055594f5a78cd110c15926b1e22905a7567aafd96",
++      "native_symbol": "__ZN13IOEventSource19signalWorkAvailableEv",
++      "evidence": "2026-11-18 CoreAnalyticsFamily import. Original: ldr x0,[x0,#48] (workLoop); tail call of its virtual +0xd0 with discriminator 0xedeb = RELEASE reference __ZN13IOEventSource19signalWorkAvailableEv (timeoutSignaled first stores w1 and tests a flag)."
++    },
++    {
++      "original": "0xfffffe000ad4d0b8",
++      "original_size": 712,
++      "original_sha256": "3ae75d41889305846c22ed54d0c01b053c99651d123751ce141ff4f9d26d3cba",
++      "native_symbol": "_lck_mtx_gate_wait",
++      "evidence": "2026-11-18 u27-pram4: AppleImage4 +0xa3c8 called it from a sysctl handler (a user process: fleh_synchronous > unix_syscall > sysctl > sysctl_root). Apple order lck_mtx_gate_open, _handoff, _steal, then this (blocks built with pacda/pacia) = RELEASE reference order gate_open, gate_handoff, gate_steal, _lck_mtx_gate_wait (with its block_invokes)."
++    },
++    {
++      "original": "0xfffffe000b227a08",
++      "original_size": 84,
++      "original_sha256": "614646f1f25c6bfbbfe2fb17731299300d67bb7d5b9c41d070aaf331a31c4a7c",
++      "native_symbol": "_csfg_get_csblob",
++      "evidence": "AMFI's mmap check (mac_file_check_mmap) reaches this through its GOT slot 0xfffffe0008135fe8 (x17 at the unmapped-stub panic, u27-sysos5 photo). Body equal to the native csfg_get_csblob instruction for instruction (fg->fg_ops discriminator 34108 at +40, fg_data 4533 at +56, DTYPE_VNODE check, tail call ubc_cs_blob_get(vp, -1, -1, offset)); csfg_get_platform_identifier, the other 1.00 fingerprint, reads blob+128 after the call, which this body does not."
      }
    ],
    "data": [
-@@ -1271,6 +2503,30 @@
+@@ -1271,6 +2734,30 @@
        "native_symbol": "_gPESerialBaud",
        "addend": 0,
        "evidence": "32-bit global holding -1 in the original image. IOSerialFamily reads it when it sets a new tty up, takes 9600 when it is -1 and stores the result in t_ispeed and t_ospeed. Source pexpert/gen/pe_gen.c int32_t gPESerialBaud = -1, exported in config/Unsupported.exports; the kernel itself has no reader in the original image."

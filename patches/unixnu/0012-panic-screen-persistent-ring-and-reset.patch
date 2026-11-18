@@ -1,0 +1,210 @@
+diff --git a/scripts/patch-xnu-entry-probe.py b/scripts/patch-xnu-entry-probe.py
+index 58b5a81..9d2a0d7 100644
+--- a/scripts/patch-xnu-entry-probe.py
++++ b/scripts/patch-xnu-entry-probe.py
+@@ -43,6 +43,8 @@ START_FIRST_CPU = 0xFFFFFFF00B9D205C
+ MMU_ENABLE_VA = 0xFFFFFFF00B9D2330   # msr SCTLR_EL1, x0
+ AFTER_MMU_VA = 0xFFFFFFF00B9D2350    # mov x0, #0x300000
+ PANIC_VA = 0xFFFFFFF00BF69B04      # _panic
++PANIC_RESET = 0                    # --panic-reset: seconds before the panic screen's PSCI reset, 0 = stay
++BOARD_CAVE_BYTES = 0x1000          # size of a board kernel's _penang_panic_cave
+ VINFO_VA = 0xFFFFFFF00C0A2970      # _vinfo
+ PANIC_CAVE_END = 0xFFFFFFF00B9D0FF0
+ CAVE_SIZE = 0x60
+@@ -206,6 +208,14 @@ def assemble_c(source, va, workdir, symbols):
+         if not any(base <= text and text + 256 <= base + size for base, size, _, _ in SEGMENTS):
+             raise SystemExit('Invalid _boot_progress_panic_text')
+         definitions.append(f'-DPANIC_TEXT={text:#x}UL')
++    # Optional: the board's persistent console ring pointer (penang XNU penang_pram_va): the panic text is appended there too.
++    pram = symbols.get('_penang_pram_va')
++    if pram is not None:
++        if pram % 8 or not any(base <= pram and pram + 8 <= base + size for base, size, _, _ in SEGMENTS):
++            raise SystemExit('Invalid _penang_pram_va')
++        definitions.append(f'-DPRAM_SLOT={pram:#x}UL')
++    if PANIC_RESET:
++        definitions.append(f'-DPANIC_RESET_SECONDS={PANIC_RESET}')
+     subprocess.run([clang, '--target=aarch64-none-elf', '-ffreestanding', '-fno-builtin', '-fno-stack-protector',
+                     '-mgeneral-regs-only', '-fno-pic', '-mcmodel=tiny', '-Oz', f'-DVINFO={VINFO_VA:#x}UL',
+                     *definitions, f'-I{font_dir}', '-c', source, '-o', obj], check=True)
+@@ -364,11 +374,17 @@ def main():
+     parser.add_argument('--reset-after', metavar='SYMBOL', help='place the reset after this call in arm_init instead of stage 3')
+     parser.add_argument('--reset-before', action='store_true', help='reset at the call site before invoking SYMBOL (requires --reset-after)')
+     parser.add_argument('--panic-screen', action='store_true', help='draw panic() messages on the screen')
++    parser.add_argument('--panic-reset', type=int, default=0, metavar='SECONDS',
++                        help='with --panic-screen: PSCI reset this long after drawing the panic (0 = stay)')
+     parser.add_argument('--no-reset', action='store_true', help='no reset probe at all')
+     parser.add_argument('--watchdog-wait', action='store_true', help='wait at kernel entry for the firmware watchdog, with a timed PSCI fallback')
+     parser.add_argument('--occurrence', type=int, default=1, help='which call to SYMBOL (1 = first)')
+     parser.add_argument('--in', dest='function', default='_arm_init', help='function that makes the call (default _arm_init)')
+     args = parser.parse_args()
++    global PANIC_RESET
++    if not 0 <= args.panic_reset <= 3600:
++        raise SystemExit('--panic-reset takes 0..3600 seconds')
++    PANIC_RESET = args.panic_reset
+     if args.reset_before and not args.reset_after:
+         raise SystemExit('--reset-before requires --reset-after')
+     data = bytearray(args.kernel.read_bytes())
+@@ -453,6 +469,15 @@ _start:
+     if args.panic_screen:
+         # Right after the last probe cave in use, so the padding is shared as tightly as possible.
+         PANIC_CAVE = max(CAVES[stage] for _, stage, _ in sites) + CAVE_SIZE
++        # A board kernel may reserve its own room for the panic screen: _penang_panic_cave, BOARD_CAVE_BYTES of
++        # brk #1 in kernel text (penang XNU), used when the shared padding is too small for the board's options.
++        board_cave = kernel_names.get('_penang_panic_cave')
++        if board_cave is not None:
++            PANIC_CAVE, PANIC_CAVE_END = board_cave, board_cave + BOARD_CAVE_BYTES
++            words = struct.unpack_from(f'<{BOARD_CAVE_BYTES // 4}I', data, file_offset(PANIC_CAVE))
++            if any(w != 0xD4200020 for w in words):
++                raise SystemExit('_penang_panic_cave is not the expected brk #1 fill')
++            data[file_offset(PANIC_CAVE):file_offset(PANIC_CAVE_END)] = bytes(BOARD_CAVE_BYTES)
+         if word(PANIC_VA) in (0, 0xFFFFFFFF) or any(data[file_offset(PANIC_CAVE):file_offset(PANIC_CAVE_END)]):
+             raise SystemExit('panic() or the panic screen padding is not as expected')
+         with tempfile.TemporaryDirectory() as tmp:
+diff --git a/scripts/unixnu/payload.py b/scripts/unixnu/payload.py
+index 63c8769..463df2a 100644
+--- a/scripts/unixnu/payload.py
++++ b/scripts/unixnu/payload.py
+@@ -194,6 +194,9 @@ def build(ctx, kernel=None):
+         probe = (['--reset-delay', str(int(spec['entry_probe_reset_delay']))]
+                  if spec.get('entry_probe_reset_delay') else ['--no-reset'])
+         screen = ['--panic-screen'] if spec.get('panic_screen') else []
++        # [payload] panic_reset_delay: the panic screen resets the board that many seconds after drawing (unattended runs).
++        if spec.get('panic_screen') and spec.get('panic_reset_delay'):
++            screen += ['--panic-reset', str(int(spec['panic_reset_delay']))]
+         if spec.get('entry_probe_reset_delay') and spec.get('entry_probe_reset_after'):
+             # Stage 4 in place of stage 3: reset after the Nth call to SYMBOL in FUNCTION.
+             probe += ['--reset-after', spec['entry_probe_reset_after'], '--in', spec.get('entry_probe_reset_in', '_arm_init'),
+diff --git a/scripts/xnu-panic-screen.c b/scripts/xnu-panic-screen.c
+index 188a2c8..16e9b30 100644
+--- a/scripts/xnu-panic-screen.c
++++ b/scripts/xnu-panic-screen.c
+@@ -33,7 +33,63 @@ struct ctx {
+   u32 rb, w, h, x, y;
+   u8  *log;   /* kernel buffer that also receives the formatted message (PANIC_TEXT), 0 = none */
+   u32 logn;
++  volatile u8 *pram;   /* the board's persistent console ring (PRAM_SLOT), 0 = none */
+ };
++#ifndef PRAM_SLOT
++#define PRAM_SLOT 0UL
++#endif
++
++/* Optional: a kernel pointer variable holding the board's persistent console ring, the {u32 sig "DBGC", u32 start,
++ * u32 size} ring that Linux reads back as /sys/fs/pstore/console-ramoops-0 after a warm reset (penang XNU's
++ * penang_pram_va). Everything drawn is appended there too, so an unattended run's panic is read without a photograph. */
++#ifndef PRAM_SLOT
++#define PRAM_SLOT 0UL
++#endif
++#define PRAM_SIG  0x43474244u
++#define PRAM_DATA (0x40000u - 12u)
++/* Optional: seconds to keep the panic on the screen before PSCI SYSTEM_RESET (smc), 0 = stay. */
++#ifndef PANIC_RESET_SECONDS
++#define PANIC_RESET_SECONDS 0
++#endif
++
++#if PRAM_SLOT
++static void pram_put (volatile u8 *ring, u8 c)
++{
++  volatile u32 *h = (volatile u32 *)ring;
++  if (h[0] != PRAM_SIG || h[1] >= PRAM_DATA || h[2] > PRAM_DATA) {
++    h[0] = PRAM_SIG;
++    h[1] = 0;
++    h[2] = 0;
++  }
++  u32 start = h[1], size = h[2];
++  ring[12 + start] = c;
++  h[1] = (start + 1) % PRAM_DATA;
++  if (size < PRAM_DATA) {
++    h[2] = size + 1;
++  }
++}
++#endif
++
++#if PANIC_RESET_SECONDS
++__attribute__((noreturn)) static void reset_after (u64 seconds)
++{
++  u64 freq, start, now;
++  __asm__ volatile ("mrs %0, cntfrq_el0" : "=r" (freq));
++  __asm__ volatile ("isb\n\tmrs %0, cntvct_el0" : "=r" (start));
++  do {
++    __asm__ volatile ("isb\n\tmrs %0, cntvct_el0" : "=r" (now));
++  } while (now - start < seconds * freq);
++  for (;;) {
++    /* SYSTEM_RESET2 warm first: SYSTEM_RESET is a PMIC hard reset on the g53 and DDR (the persistent ring) decays. */
++    register u64 r2 __asm__ ("x0") = 0xC4000012UL;
++    register u64 type __asm__ ("x1") = 0;
++    register u64 cookie __asm__ ("x2") = 0;
++    __asm__ volatile ("smc #0" : "+r" (r2), "+r" (type), "+r" (cookie) : : "x3", "memory");
++    register u64 x0 __asm__ ("x0") = 0x84000009UL;   /* PSCI SYSTEM_RESET */
++    __asm__ volatile ("smc #0" : "+r" (x0) : : "x1", "x2", "x3", "memory");
++  }
++}
++#endif
+ 
+ #ifndef PANIC_TEXT
+ #define PANIC_TEXT 0UL
+@@ -52,6 +108,11 @@ static void put (struct ctx *g, u8 c)
+   const u32 cell = 6 * SCALE, line = 14 * SCALE;
+   u32 row, col, dy, dx;
+ 
++#if PRAM_SLOT
++  if (g->pram && (c == '\n' || (c >= 32 && c <= 126))) {
++    pram_put (g->pram, c);
++  }
++#endif
+   if (g->log && g->logn < PANIC_TEXT_BYTES - 1 && c >= 9 && c <= 126) {
+     g->log[g->logn++] = (c < 32) ? ' ' : c;
+     g->log[g->logn] = 0;
+@@ -226,7 +287,13 @@ __attribute__((noreturn, used, section(".text.b_main"))) void panic_screen_main
+   g.rb   = v->v_rowbytes;
+   g.w    = v->v_width;
+   g.h    = v->v_height;
++#if PRAM_SLOT
++  g.pram = *(volatile u8 *volatile *)PRAM_SLOT;
++#endif
+   if (g.base == 0 || v->v_depth != 32 || fmt == 0) {
++#if PANIC_RESET_SECONDS
++    reset_after (PANIC_RESET_SECONDS);
++#endif
+     park ();
+   }
+ 
+@@ -234,7 +301,7 @@ __attribute__((noreturn, used, section(".text.b_main"))) void panic_screen_main
+    * the screen; a later panic (another thread or exception) must not overwrite it. */
+   volatile u32 *mark = (volatile u32 *)(g.base + (u64)(g.h - 1) * g.rb);
+   if (mark[0] == 0xC0FFEE11u && mark[1] == 0x5CEEDA7Au) {
+-    park ();
++    park ();   /* the first panic resets the board */
+   }
+   g.x = 0;
+   g.y = g.h / 8;
+@@ -246,6 +313,14 @@ __attribute__((noreturn, used, section(".text.b_main"))) void panic_screen_main
+     }
+   }
+   g.y += 8;
++#if PRAM_SLOT
++  if (g.pram) {
++    const char *banner = "\n==== kernel panic ====\n";
++    while (*banner) {
++      pram_put (g.pram, (u8)*banner++);
++    }
++  }
++#endif
+   /* The board's live banner keeps showing this text after the next swap paints over the screen (BootProgress.c,
+    * boot_progress_panic_text). The first panic's text is kept: a buffer that already holds one is left alone. */
+   if (PANIC_TEXT && *(volatile u8 *)PANIC_TEXT == 0) {
+@@ -278,7 +353,15 @@ __attribute__((noreturn, used, section(".text.b_main"))) void panic_screen_main
+   /* The raw argument slots are not dumped: the formatted message above already carries them (room for the PANIC_TEXT copy). */
+   mark[0] = 0xC0FFEE11u;
+   mark[1] = 0x5CEEDA7Au;
++#if PRAM_SLOT
++  if (g.pram) {
++    pram_put (g.pram, '\n');
++  }
++#endif
+   __asm__ volatile ("dsb sy");
++#if PANIC_RESET_SECONDS
++  reset_after (PANIC_RESET_SECONDS);
++#endif
+   park ();
+ }
+ 

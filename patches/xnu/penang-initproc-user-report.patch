@@ -1,0 +1,85 @@
+--- a/bsd/kern/kern_exit.c	2026-11-18 17:02:27.129135265 -0300
++++ b/bsd/kern/kern_exit.c	2026-11-18 17:03:11.639727712 -0300
+@@ -1960,6 +1960,61 @@
+ #endif /* (DEVELOPMENT || DEBUG) && CONFIG_COREDUMP */
+ }
+ 
++#if __arm64__
++/*
++ * penang: user state of a dying initproc. The kernel frames of "initproc exited" are always the signal path
++ * (postsig_locked -> exit_with_reason -> proc_prepareexit); the cause is in launchd. On the thread that takes
++ * the fatal signal (abort() signals itself), print its user pc/lr/fp/sp, x0-x3, the frame-pointer chain, launchd's
++ * load address (dyld infoArray[0]) and dyld's all_image_infos (shared cache slide at +0x98, base at +0xb8), so the frames can be
++ * symbolized against launchd and the shared cache offline. Returns a short summary for the panic string.
++ */
++static void
++penang_initproc_user_report(proc_t p, char *summary, size_t summary_len)
++{
++	arm_thread_state64_t ts = {};
++	mach_msg_type_number_t count = ARM_THREAD_STATE64_COUNT;
++	task_t task = proc_task(p);
++	uint64_t mh = 0;
++	uint64_t aii = task ? task_get_all_image_info_addr(task) : 0;
++
++	summary[0] = '\0';
++	if (thread_get_state(current_thread(), ARM_THREAD_STATE64, (thread_state_t)&ts, &count) != KERN_SUCCESS) {
++		printf("initproc user: no thread state\n");
++		return;
++	}
++	printf("initproc user: pc 0x%llx lr 0x%llx fp 0x%llx sp 0x%llx x0 0x%llx x1 0x%llx x2 0x%llx x3 0x%llx aii 0x%llx\n",
++	    ts.pc, ts.lr, ts.fp, ts.sp, ts.x[0], ts.x[1], ts.x[2], ts.x[3], aii);
++	uint64_t aiq[0xc0 / 8] = {};
++	if (aii && copyin((user_addr_t)aii, aiq, sizeof(aiq)) == 0) {
++		/* infoArray (+0x8) entry 0 is the main executable: { imageLoadAddress, filePath, modDate } */
++		if (aiq[1] && copyin((user_addr_t)aiq[1], &mh, sizeof(mh)) != 0) {
++			mh = 0;
++		}
++		printf("initproc user: dyld slide 0x%llx base 0x%llx dyld 0x%llx err 0x%llx main 0x%llx\n", aiq[0x98 / 8], aiq[0xb8 / 8], aiq[0x20 / 8],
++		    aiq[0x38 / 8], mh);
++	}
++	uint64_t fp = ts.fp, frames[16] = {};
++	unsigned n = 0;
++	while (fp && !(fp & 7) && n < 16) {
++		uint64_t pair[2];
++		if (copyin((user_addr_t)fp, pair, sizeof(pair)) != 0) {
++			break;
++		}
++		frames[n++] = pair[1] & 0x0000007fffffffffULL;
++		if (pair[0] <= fp) {
++			break;
++		}
++		fp = pair[0];
++	}
++	for (unsigned i = 0; i < n; i += 4) {
++		printf("initproc user frames %u: 0x%llx 0x%llx 0x%llx 0x%llx\n", i, frames[i], i + 1 < n ? frames[i + 1] : 0,
++		    i + 2 < n ? frames[i + 2] : 0, i + 3 < n ? frames[i + 3] : 0);
++	}
++	snprintf(summary, summary_len, " upc 0x%llx ulr 0x%llx mh 0x%llx slide 0x%llx uf %llx %llx %llx %llx %llx %llx", ts.pc, ts.lr, mh,
++	    aiq[0x98 / 8], frames[0], frames[1], frames[2], frames[3], frames[4], frames[5]);
++}
++#endif /* __arm64__ */
++
+ static void
+ proc_handle_critical_exit(proc_t p, int rv)
+ {
+@@ -1991,11 +2046,20 @@
+ 	const char *prefix_str;
+ 	char prefix_str_buf[128];
+ 
++	static char penang_initproc_buf[256];
+ 	if (p == initproc) {
++#if __arm64__
++		char penang_summary[200];
++		penang_initproc_user_report(p, penang_summary, sizeof(penang_summary));
++#endif
+ 		if (strnstr(p->p_name, "preinit", sizeof(p->p_name))) {
+ 			prefix_str = "LTE preinit process exited";
+ 		} else if (initproc_spawned) {
+ 			prefix_str = "initproc exited";
++#if __arm64__
++			snprintf(penang_initproc_buf, sizeof(penang_initproc_buf), "initproc exited%s", penang_summary);
++			prefix_str = penang_initproc_buf;
++#endif
+ 		} else {
+ 			prefix_str = "initproc failed to start";
+ 		}

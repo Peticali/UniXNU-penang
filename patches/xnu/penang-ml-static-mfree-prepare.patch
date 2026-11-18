@@ -1,0 +1,23 @@
+--- a/osfmk/arm64/machine_routines.c	2026-11-18 09:54:10.016862611 -0300
++++ b/osfmk/arm64/machine_routines.c	2026-11-18 09:54:10.054884636 -0300
+@@ -2153,6 +2153,20 @@
+ }
+ 
+ /*
++ * penang: UniXNU's RamBlock weak-imports ml_static_mfree_prepare (defined by the macOS profile's kc-segment-release
++ * patch) to hand a packed RAM-disk seed back with boot-payload-release=1. This iOS kernel has no such release path, so
++ * the range is never prepared and the RAM disk keeps the seed's memory, as without the boot argument. A definition is
++ * needed because the static kernel cannot branch to an unresolved weak symbol.
++ */
++bool ml_static_mfree_prepare(vm_offset_t vaddr, vm_size_t size);
++bool
++ml_static_mfree_prepare(vm_offset_t vaddr, vm_size_t size)
++{
++#pragma unused(vaddr, size)
++	return false;
++}
++
++/*
+  *	Routine:        ml_static_mfree
+  *	Function:
+  */

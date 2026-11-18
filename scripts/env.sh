@@ -3,6 +3,8 @@
 export UNIXNU_TOOLCHAIN=${UNIXNU_TOOLCHAIN:-/mnt/nvme/xnu-build/unixnu/toolchain/prefix}
 export PATH="$UNIXNU_TOOLCHAIN/bin:$PATH"
 export TMPDIR=${TMPDIR:-/mnt/nvme/xnu-build/unixnu/toolchain/tmp}
+# XNU make jobs (build-xnu-4k-baseline.sh defaults to 4): every host thread.
+export JOBS=${JOBS:-$(nproc)}
 
 
 # The profile's original kernelcache (scripts/kextpac/make-kernelcache.sh fetches it; the prelink checks its pin).

@@ -1,0 +1,25 @@
+diff --git a/scripts/build-sheng-source-storage.py b/scripts/build-sheng-source-storage.py
+index 906aae2..895ec98 100644
+--- a/scripts/build-sheng-source-storage.py
++++ b/scripts/build-sheng-source-storage.py
+@@ -11,6 +11,7 @@ import hashlib
+ import importlib.util
+ import json
+ import os
++import tomllib
+ from pathlib import Path
+ from unixnu.util import tool
+ import shutil
+@@ -94,6 +95,12 @@ def main():
+         package_dirs += [device / 'kits/sheng', tree / 'kits/sheng']
+     else:
+         package_dirs += [tree / 'kits/sheng']
++    # Another board's package is linked as kits/<its kit> (board.toml [board] kit); the kernel step exports UNIXNU_DEVICE.
++    board = Path(os.environ['UNIXNU_DEVICE']) / 'board.toml' if os.environ.get('UNIXNU_DEVICE') else None
++    if board and board.is_file():
++        kit = tomllib.loads(board.read_text()).get('board', {}).get('kit')
++        if kit and kit != 'sheng':
++            package_dirs += [tree / 'kits' / kit, board.parent / 'package']
+ 
+     def device_source(relative, *extra):
+         for directory in list(extra) + package_dirs + [device, tree]:

@@ -1,0 +1,16 @@
+--- a/osfmk/prng/prng_random.c	2026-11-18 14:32:36.679088290 -0300
++++ b/osfmk/prng/prng_random.c	2026-11-18 14:32:36.688379952 -0300
+@@ -601,7 +601,12 @@
+ 	};
+ 	uint32_t mode = 0;
+ 
+-	if (PE_parse_boot_argn("fips_mode", &mode, sizeof(mode)) && mode != 0) {
++	/*
++	 * penang: fips_mode=64 (NOINTEG, bit 6: run_all skips the integrity test) alone is allowed. launchd's "fips" boot task runs cc_fips_test,
++	 * which reads this boot-arg; its integrity test hashes libcorecrypto's __TEXT, which the runtime user PAC rewrite
++	 * changes, so it fails (-74) and launchd panics. Every known-answer test still runs.
++	 */
++	if (PE_parse_boot_argn("fips_mode", &mode, sizeof(mode)) && mode != 0 && mode != 64) {
+ 		panic("source corecrypto verification requires complete default POST");
+ 	}
+ 	kmod_info_t *original = source_corecrypto14_original();

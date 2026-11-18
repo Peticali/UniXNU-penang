@@ -1,0 +1,57 @@
+diff --git a/scripts/unixnu/ipsw.py b/scripts/unixnu/ipsw.py
+index de3ef3c..37b0fa7 100644
+--- a/scripts/unixnu/ipsw.py
++++ b/scripts/unixnu/ipsw.py
+@@ -17,6 +17,7 @@ import os
+ import platform
+ import plistlib
+ import struct
++import shutil
+ import subprocess
+ import threading
+ import time
+@@ -337,9 +338,9 @@ def decrypt_aea(path):
+         if data.get('aea_sha256') == json.loads(path.with_suffix(path.suffix + '.json').read_text()).get('sha256') \
+                 and data.get('size') == out.stat().st_size:
+             return out
+-    if platform.system() != 'Darwin':
+-        raise Error(f'{path.name} is AEA encrypted; decrypting it needs macOS /usr/bin/aea')
+-    tool('aea', 'macOS /usr/bin/aea decrypts AEA disk images')
++    linux = platform.system() != 'Darwin'
++    if not linux:
++        tool('aea', 'macOS /usr/bin/aea decrypts AEA disk images')
+     ipsw = tool('ipsw', 'the ipsw tool fetches the AEA key (brew install blacktop/tap/ipsw)')
+     log(f'ipsw: fetching the AEA key of {path.name}')
+     result = subprocess.run([ipsw, 'fw', 'aea', '--key', str(path)], capture_output=True, text=True)
+@@ -348,11 +349,26 @@ def decrypt_aea(path):
+         raise Error(f'could not fetch the AEA key of {path.name}: {result.stderr.strip()[-300:]}')
+     partial = out.with_suffix(out.suffix + '.partial')
+     log(f'ipsw: decrypting {path.name}')
+-    result = subprocess.run(['/usr/bin/aea', 'decrypt', '-i', str(path), '-o', str(partial), '-key-value', keys[0]],
+-                            capture_output=True, text=True)
+-    if result.returncode:
+-        partial.unlink(missing_ok=True)
+-        raise Error(f'aea decrypt of {path.name} failed: {result.stderr.strip()[-300:]}')
++    if linux:
++        # Without macOS aea: the ipsw tool decrypts AEA1 itself into a folder (the plain file keeps the name without
++        # .aea). The profile's image digests still check the result.
++        folder = out.with_suffix(out.suffix + '.aea-out')
++        shutil.rmtree(folder, ignore_errors=True)
++        folder.mkdir()   # ipsw writes into the folder but does not create it
++        result = subprocess.run([ipsw, 'fw', 'aea', '--key-val', keys[0].removeprefix('base64:'), '--output', str(folder),
++                                 str(path)], capture_output=True, text=True)
++        produced = [entry for entry in folder.iterdir() if entry.is_file()] if folder.is_dir() else []
++        if result.returncode or len(produced) != 1:
++            shutil.rmtree(folder, ignore_errors=True)
++            raise Error(f'ipsw fw aea decrypt of {path.name} failed: {(result.stderr or result.stdout).strip()[-300:]}')
++        produced[0].rename(partial)
++        shutil.rmtree(folder, ignore_errors=True)
++    else:
++        result = subprocess.run(['/usr/bin/aea', 'decrypt', '-i', str(path), '-o', str(partial), '-key-value', keys[0]],
++                                capture_output=True, text=True)
++        if result.returncode:
++            partial.unlink(missing_ok=True)
++            raise Error(f'aea decrypt of {path.name} failed: {result.stderr.strip()[-300:]}')
+     partial.rename(out)
+     source = json.loads(path.with_suffix(path.suffix + '.json').read_text())
+     record.write_text(json.dumps({'member': source.get('member'), 'aea_sha256': source.get('sha256'),

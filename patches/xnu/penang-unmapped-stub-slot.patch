@@ -1,0 +1,30 @@
+--- a/osfmk/kern/debug.c	2026-11-18 13:27:49.184284570 -0300
++++ b/osfmk/kern/debug.c	2026-11-18 13:27:49.193728532 -0300
+@@ -2583,10 +2583,24 @@
+  * Target of original kext calls into kernel functions this kernel does not have (fileset emission
+  * redirects them here). The return address is the call site in the original component.
+  */
++/*
++ * penang: the stub is entered straight from the original code, so x16 and x17 still hold what that code used to reach it:
++ * an import stub's GOT slot, or the vtable/table slot of an indirect call ("ldr x8, [x16, #off]!"). Those name the original
++ * target, which every unmapped call shares this one stub for. The trampoline keeps them (and the caller's x30) for the report.
++ */
++__attribute__((noinline, noreturn, used))
++void unixnu_fileset_unmapped_report(uint64_t arg0, uint64_t arg1, uint64_t x16, uint64_t x17, uint64_t lr);
+ __attribute__((noinline, noreturn, used))
+ void
+-unixnu_fileset_unmapped(uint64_t arg0, uint64_t arg1)
++unixnu_fileset_unmapped_report(uint64_t arg0, uint64_t arg1, uint64_t x16, uint64_t x17, uint64_t lr)
++{
++	panic("fileset: original component called an unmapped kernel function from %p (x0 0x%llx x1 0x%llx x16 0x%llx x17 0x%llx)",
++	    ptrauth_strip((void *)lr, ptrauth_key_return_address), arg0, arg1, x16, x17);   /* no-op without PAC (arm64) */
++}
++
++__attribute__((naked, noreturn, used))
++void
++unixnu_fileset_unmapped(__unused uint64_t arg0, __unused uint64_t arg1)
+ {
+-	panic("fileset: original component called an unmapped kernel function from %p (x0 0x%llx x1 0x%llx)",
+-	    ptrauth_strip(__builtin_return_address(0), ptrauth_key_return_address), arg0, arg1);   /* no-op without PAC (arm64) */
++	__asm__ volatile ("mov x2, x16\n\tmov x3, x17\n\tmov x4, x30\n\tb _unixnu_fileset_unmapped_report");
+ }

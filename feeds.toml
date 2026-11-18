@@ -3,4 +3,14 @@ name = "sm4350"
 kind = "soc"
 git = "https://github.com/Peticali/UniXNU-sm4350-common"
 # Replace with a reviewed 40-character commit from the selected SoC repository.
-commit = "eb0b02dc7beb04d496c941d78b679ad3e57042a7"
+commit = "67b6463e6110825e9e7ead564234a8c3be788c16"
+
+# UFS root transport: UniXNU's ShengUfs at its current main (f020bd6) plus the penang commits that select the SoC's UFS host,
+# apps SMMU and interrupt by boot argument (native-ufs-soc=4350: ufshc@4804000, SPI 0x164, apps-smmu@c600000, stream 0x60), the userdata LUN (4 on the g53) and keep the firmware's
+# SMMU pass-through for the UFS stream (bank 2 on the g53, read by native-ufs-probe=7/8).
+# SM8550 stays the default. Pinned by commit: the driver owns DMA, the SMMU context and the command ring.
+[[source]]
+name = "ShengUfs"
+kind = "driver"
+git = "https://github.com/Peticali/ShengUfs-penang.git"
+commit = "ae2101776de32afa2007f9726195b19420ffd9be"

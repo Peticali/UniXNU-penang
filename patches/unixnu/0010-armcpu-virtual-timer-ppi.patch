@@ -1,0 +1,87 @@
+diff --git a/ArmCpu.cpp b/ArmCpu.cpp
+index 372a2a4..e428713 100644
+--- a/ArmCpu.cpp
++++ b/ArmCpu.cpp
+@@ -107,7 +107,11 @@ static bool gSleepEnabled = false;                         // platform-sleep=1
+ static bool gSleepHvc = false;                             // the PSCI conduit, from /psci
+ static uint32_t gSleepWakeAfterS = 0;                      // platform-sleep-wake-after=<seconds>; 0 none
+ static const struct armcpu_sleep_board *volatile gSleepBoard = nullptr;
+-static const uint32_t kVirtualTimerPpi = 27;
++// The virtual timer's PPI: 27 on most boards. Qualcomm SoCs of the holi/kona generation route it to PPI 3 = INTID 19
++// (stock device tree: arm,armv8-timer interrupts <1 1>, <1 2>, <1 3>, <1 0>). The board says so with the /arm-io/intc
++// property virtual-timer-ppi (one 32-bit INTID, 16..31); boot-arg armcpu-timer-ppi overrides it. With the wrong PPI no
++// timer interrupt reaches rtclock_intr and every timed wait (IOSleep, mutex_pause, assert_wait_timeout) sleeps forever.
++static uint32_t gTimerPpi = 27;
+ static bool psciConduit (bool *hvc);
+ static void armcpuPlatformSleep (boolean_t bootCpu);
+ 
+@@ -156,8 +160,8 @@ public:
+ 
+ OSDefineMetaClassAndStructors (ArmCpu, IOCPU)
+ 
+-// Redistributor ISENABLER0: the kernel's SGI 0 and virtual timer PPI 27.
+-static const uint32_t kSgiPpiEnable = 1U | (1U << 27);
++// Redistributor ISENABLER0: the kernel's SGI 0 and the virtual timer PPI (gTimerPpi, 27 by default).
++static inline uint32_t sgiPpiEnable (void) { return 1U | (1U << gTimerPpi); }
+ 
+ static const uint32_t kIpiSpiBase = 1008;   // INTIDs 1008..1015 stand for 'IPI to logical core 0..7'
+ 
+@@ -413,6 +417,13 @@ bool ArmCpu::mapGic (void)
+     if (gRedistStride != 0x20000 && gRedistStride != 0x30000 && gRedistStride != 0x40000) { gRedistStride = 0; }
+   }
+   armcpu_gic_stride = static_cast<uint32_t> (gRedistStride);
++  uint32_t timerPpi = 0;
++  OSData *timerProperty = OSDynamicCast (OSData, gic->getProperty ("virtual-timer-ppi"));
++  if (timerProperty != nullptr && timerProperty->getLength () == sizeof (uint32_t)) {
++    memcpy (&timerPpi, timerProperty->getBytesNoCopy (), sizeof (uint32_t));
++  }
++  PE_parse_boot_argn ("armcpu-timer-ppi", &timerPpi, sizeof (timerPpi));
++  if (timerPpi >= 16 && timerPpi < 32) { gTimerPpi = timerPpi; }
+   soc->release ();
+   gic->release ();
+   if (!valid || (regions[1] < 0x10000) || (regions[3] < 0x20000)) {
+@@ -496,7 +507,7 @@ bool ArmCpu::wakeRedistributor (bool local)
+   for (unsigned offset = 0x400; offset < 0x420; offset += 4) {
+     write32 (sgi, offset, 0x80808080);
+   }
+-  if (!local) { write32 (sgi, 0x100, kSgiPpiEnable); }
++  if (!local) { write32 (sgi, 0x100, sgiPpiEnable ()); }
+   __asm__ volatile ("dsb sy" ::: "memory");
+   return waitClear (redist, 0, 8);
+ }
+@@ -525,7 +536,7 @@ void ArmCpu::enableGic (void)
+   __asm__ volatile ("msr icc_bpr1_el1, %0" :: "r" (value) : "memory");
+   if (!secondary) { gBootAffinity = affinity & 0xff00ffffffULL; }
+   if (!secondary || !gRemoteGic) {
+-    write32 (redist + 0x10000, 0x100, kSgiPpiEnable);
++    write32 (redist + 0x10000, 0x100, sgiPpiEnable ());
+     write32 (dist, 0, read32 (dist, 0) | 0x12U);
+   }
+   value = 1;
+@@ -842,7 +853,7 @@ void ArmCpu::interrupt (void)
+     // Only an interrupt that never stops coming (a level line nobody clears) is a fault: a million in one drain.
+     ++drained;
+     if(diagnosePower && drained>1000000)panic("ArmCpu: IRQ drain exceeds 1000000 id=%llx timer=%llu IPI=%llu",id,armcpu_timer_interrupts,armcpu_ipi_interrupts);
+-    if ((id & 0xffffff) == 27) {
++    if ((id & 0xffffff) == gTimerPpi) {
+       armcpu_timer_interrupts = armcpu_timer_interrupts + 1;
+       armcpu_core_timer[logicalId & 7] = armcpu_core_timer[logicalId & 7] + 1;
+       timerTaken (core, core.wakeOpen != 0);
+@@ -990,7 +1001,7 @@ extern "C" void armcpu_sgi_selfprobe (uint64_t *out)
+   if ((mpidr & 0xff) < 16) {
+     const uint64_t base = ((mpidr & 0xff00000000ULL) << 16) | ((mpidr & 0xff0000) << 16) | ((mpidr & 0xff00) << 8) | (1ULL << (mpidr & 0xff));
+     for (uint64_t intid = 0; intid < 16; intid++) {
+-      if (!(kSgiPpiEnable & (1U << intid))) { continue; }
++      if (!(sgiPpiEnable () & (1U << intid))) { continue; }
+       const uint64_t sgi = base | (intid << 24);
+       uint64_t h = 1023, ta, tb;
+       __asm__ volatile ("dsb ishst\n\tisb\n\tmrs %0, cntvct_el0\n\tisb" : "=r" (ta) :: "memory");
+@@ -1141,7 +1152,7 @@ static void sleepBootWait (void)
+     __asm__ volatile ("mrs %0, icc_hppir1_el1" : "=r" (hppir));
+     intid = static_cast<uint32_t> (hppir & 0xffffff);
+     if (intid >= 1020) { continue; }
+-    if (intid == kVirtualTimerPpi) {
++    if (intid == gTimerPpi) {
+       uint32_t pending[ARMCPU_SLEEP_SPI_WORDS] = {};
+       for (unsigned w = 1; w < words; w++) { pending[w] = read32 (gDist, 0x200 + 4 * w); }   // ISPENDR
+       const uint32_t source = armcpu_sleep_pending_source (pending, keep);

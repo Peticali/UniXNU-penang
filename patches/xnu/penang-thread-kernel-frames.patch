@@ -1,0 +1,50 @@
+--- a/osfmk/arm64/machine_routines.c	2026-11-18 10:43:43.864582456 -0300
++++ b/osfmk/arm64/machine_routines.c	2026-11-18 10:43:43.876248399 -0300
+@@ -2167,6 +2167,47 @@
+ }
+ 
+ /*
++ * penang (diagnostics): the kernel return addresses of another thread, read from the context it saved when it last
++ * left the CPU (the arm_kernel_context at machine.kstackptr: fp and lr) by walking the frame-pointer chain inside its
++ * kernel stack. Also its scheduler state and wait event, so a driver can name where a stuck thread sleeps or spins.
++ * Read-only; returns the number of addresses, 0 for the calling thread or a thread without a kernel stack.
++ */
++int penang_thread_kernel_frames(thread_t thread, uint64_t *pcs, int max, uint64_t *wait_event, int *state);
++int
++penang_thread_kernel_frames(thread_t thread, uint64_t *pcs, int max, uint64_t *wait_event, int *state)
++{
++	if (thread == THREAD_NULL || thread == current_thread() || pcs == NULL || max <= 0) {
++		return 0;
++	}
++	if (wait_event != NULL) {
++		*wait_event = (uint64_t)thread->wait_event;
++	}
++	if (state != NULL) {
++		*state = thread->state;
++	}
++	vm_offset_t stack = thread->kernel_stack;
++	arm_kernel_context_t *context = (arm_kernel_context_t *)thread->machine.kstackptr;
++	if (stack == 0 || context == NULL) {
++		return 0;
++	}
++	int count = 0;
++	pcs[count++] = context->ss.lr;
++	uint64_t fp = context->ss.fp;
++	while (count < max && (fp & 0xf) == 0 && fp >= stack && fp + 16 <= stack + kernel_stack_size) {
++		const uint64_t *frame = (const uint64_t *)fp;
++		if (frame[1] == 0) {
++			break;
++		}
++		pcs[count++] = frame[1];
++		if (frame[0] <= fp) {
++			break;
++		}
++		fp = frame[0];
++	}
++	return count;
++}
++
++/*
+  *	Routine:        ml_static_mfree
+  *	Function:
+  */

@@ -11,3 +11,28 @@ CONFIG_XNU_CRYPTO_BOOTSTRAP="source"
 # As UniXNU-sheng: the native kernel keeps chained fixups, which XnuPrelink uses to place it in the collection
 CONFIG_XNU_KERNEL_CHAINED_FIXUPS=y
 CONFIG_XNU_DT_PANIC_REGION=y
+# UFS root through the source-storage runtime (as UniXNU-sheng's iPadOS 27 defconfig, root stage only: the Data volume,
+# cache mount and SystemOS union come with the Data seed).
+CONFIG_XNU_EXTRA_LD_ARCHIVES="-Wl,-force_load,{tree}/build/sheng-source-storage/libShengSourceStorage.a"
+CONFIG_XNU_SOURCE_STORAGE_TABLES="userdata"
+CONFIG_XNU_SOURCE_STORAGE=y
+CONFIG_XNU_OWNER_ROOT_AUDIT=y
+CONFIG_XNU_OWNER_ROOT_TRUST=y
+CONFIG_XNU_NATIVE_RAM_BLOCK=y
+# The SystemOS cryptex, as UniXNU-sheng's iPadOS 27 defconfig: the kernel mounts the authenticated SystemOS window and
+# unions it over the root, publishes the boot manifest, and then sets dyld's bit 3 (no libignition: ignition waits on an
+# AppleImage4 ignition blob this board never publishes; launchd sat in "Darwin Ignition Sequence" on u27-pram5).
+# The writable Data volume: the first-install seed made on Linux by scripts/make-data-seed-linux.py (95 GiB container,
+# the size seed-data-grow.py --auto gives this userdata), carried packed in the payload; its changed pages persist in the
+# store window at the end of userdata (data-persist=2, NativeRamBlock + ShengUfs). The UUID is the seed's volume.
+CONFIG_XNU_OWNER_DATA_MOUNT=y
+CONFIG_XNU_OWNER_DATA_VOLUME_UUID="C8BA3964-2380-47E4-9DAF-12106CED9385"
+CONFIG_XNU_OWNER_BOOT_MANIFEST=y
+CONFIG_XNU_OWNER_CACHE_MOUNT=y
+CONFIG_XNU_OWNER_CACHE_STARTUP=y
+CONFIG_XNU_OWNER_UNION_SYSTEMOS=y
+# From the profile's os:configs/ipados.config, which the board leaves out for its crypto bootstrap (prelinked there, source
+# here): the 4 KiB kernel accepts 16 KiB-page code signatures (dyld's shared cache, page shift 14) through the native hash
+# cache. Without it: "disallowing unsupported code signature page shift: 14" and dyld "code signature registration for
+# shared cache failed" (u27-sysos1).
+CONFIG_XNU_NATIVE_CS_HASH_CACHE=y

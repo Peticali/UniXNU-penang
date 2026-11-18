@@ -17,6 +17,15 @@ import sys
 from pathlib import Path
 
 tree = Path.cwd()
+# penang: the reference only names Apple's functions for the prelink, so a device patch that adds its own code (console
+# mirror, panic cave, probes) does not need a 6-minute LTO rebuild. An existing reference is kept unless REFERENCE=rebuild
+# (after a UniXNU update or a change to code Apple's kexts call). Rebuilding it from a source that carries the board's
+# own debug code also costs pairings: on 2026-11-18 a reference built with the ramoops console and panic cave paired 268
+# fewer functions (mach_absolute_time among them) than the one built at 11:22 (lto-1e088df9bd4cfb54), now kept.
+final = tree / 'build/xnu/fileset-reference/mach.release.bcm2837.unstripped.noctf'
+if final.is_file() and os.environ.get('REFERENCE') != 'rebuild':
+    print(f'reference kept: {final} (REFERENCE=rebuild to rebuild it)')
+    sys.exit(0)
 root = Path(os.environ.get('UNIXNU_LD64_LTO', '/mnt/nvme/xnu-build/unixnu/toolchain/ld64-lto'))
 ld, liblto = root / 'bin/ld', root / 'lib/libLTO.so'
 for path in (ld, liblto):

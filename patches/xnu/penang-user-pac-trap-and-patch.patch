@@ -1,0 +1,155 @@
+--- a/osfmk/arm64/sleh.c	2026-11-18 11:21:43.147956524 -0300
++++ b/osfmk/arm64/sleh.c	2026-11-18 11:22:03.033791979 -0300
+@@ -1181,6 +1181,141 @@
+  * Uncategorized exceptions are a catch-all for general execution errors.
+  * ARM64_TODO: For now, we assume this is for undefined instruction exceptions.
+  */
++/*
++ * penang: arm64e user space on a CPU without FEAT_PAuth (Cortex-A76/A55, ARMv8.2).
++ *
++ * The IPSW's user code runs unmodified from the signed root. Its non-hint PAC instructions are UNDEFINED here and
++ * arrive as uncategorized exceptions from EL0. Each one with a one-for-one ARMv8.0 equivalent is rewritten in the page
++ * itself (through the physical aperture: the file page, so every process mapping it shares the fix) and re-executed;
++ * the next execution runs natively. The rewrite rules are those of the kernelcache de-PAC (UniXNU-penang
++ * scripts/kextpac/depac_kc.py) and of IOS-26-Hot's tools/de-pac-arm64e.py (MIT): pointers are never signed, so
++ * signing, authenticating and stripping become nops, authenticated branches and returns become plain ones, and the
++ * generic signature (pacga) is 0 for every input. LDRAA/LDRAB without writeback and with a positive offset becomes
++ * LDR; with writeback or a negative offset it is emulated each time (one load, as IOS-26-Hot's EL0 emulator).
++ * Anything else stays EXC_BAD_INSTRUCTION; the first ones are logged with their pid and pc.
++ */
++extern int proc_selfpid(void);
++static uint64_t penang_pac_patched, penang_pac_emulated, penang_pac_unhandled, penang_pac_patch_failed;
++
++static uint32_t
++penang_pac_rewrite(uint32_t i)
++{
++	if (i == 0xd65f0bffU || i == 0xd65f0fffU) {
++		return 0xd65f03c0U;                                     /* retaa/retab -> ret */
++	}
++	uint32_t rn = (i >> 5) & 31U;
++	if ((i & 0xfffffc00U) == 0xd71f0800U || (i & 0xfffffc00U) == 0xd71f0c00U) {
++		return 0xd61f0000U | rn << 5;                           /* braa/brab Xn, Xm -> br Xn */
++	}
++	if ((i & 0xfffffc00U) == 0xd73f0800U || (i & 0xfffffc00U) == 0xd73f0c00U) {
++		return 0xd63f0000U | rn << 5;                           /* blraa/blrab Xn, Xm -> blr Xn */
++	}
++	if ((i & 0xfffffc1fU) == 0xd61f081fU || (i & 0xfffffc1fU) == 0xd61f0c1fU) {
++		return 0xd61f0000U | rn << 5;                           /* braaz/brabz -> br */
++	}
++	if ((i & 0xfffffc1fU) == 0xd63f081fU || (i & 0xfffffc1fU) == 0xd63f0c1fU) {
++		return 0xd63f0000U | rn << 5;                           /* blraaz/blrabz -> blr */
++	}
++	if ((i & 0xffff0000U) == 0xdac10000U && ((i >> 10) & 0x3fU) <= 0x11U) {
++		return 0xd503201fU;                                     /* pac*, aut*, xpaci, xpacd -> nop */
++	}
++	if ((i & 0xffe0fc00U) == 0x9ac03000U) {
++		return 0xaa1f03e0U | (i & 31U);                         /* pacga Xd, Xn, Xm -> mov Xd, xzr */
++	}
++	if ((i & 0xff200c00U) == 0xf8200400U && !(i & (1U << 22))) {
++		/* ldraa/ldrab Xt, [Xn, #imm9 << 3] (S = 0, no writeback) -> ldr Xt, [Xn, #imm9 << 3] */
++		return 0xf9400000U | (((i >> 12) & 0x1ffU) << 10) | (i & 0x3ffU);
++	}
++	return 0;
++}
++
++static bool
++penang_pac_patch_page(uint64_t pc, uint32_t old, uint32_t replacement)
++{
++	uint64_t par;
++	__asm__ volatile ("at s1e1r, %1\n\tisb\n\tmrs %0, par_el1" : "=r"(par) : "r"(pc) : "memory");
++	if (par & 1) {
++		return false;
++	}
++	pmap_paddr_t pa = (pmap_paddr_t)((par & 0x0000fffffffff000ULL) | (pc & 0xfffULL));
++	if (!pmap_valid_address(pa)) {
++		return false;
++	}
++	uint32_t *word = (uint32_t *)phystokv(pa);
++	uint32_t expected = old;
++	if (!__atomic_compare_exchange_n(word, &expected, replacement, false, __ATOMIC_RELEASE, __ATOMIC_RELAXED) &&
++	    expected != replacement) {
++		return false;                                           /* changed by someone else: leave it */
++	}
++	__asm__ volatile ("dc cvau, %0\n\tdsb ish\n\tic ivau, %0\n\tic ivau, %1\n\tdsb ish\n\tisb"
++	    :: "r"(word), "r"(pc) : "memory");
++	return true;
++}
++
++static uint64_t
++penang_pac_reg(arm_saved_state64_t *ss, unsigned n, bool sp)
++{
++	return n < 29 ? ss->x[n] : n == 29 ? ss->fp : n == 30 ? ss->lr : sp ? ss->sp : 0;
++}
++
++static void
++penang_pac_set_reg(arm_saved_state64_t *ss, unsigned n, uint64_t value, bool sp)
++{
++	if (n < 29) {
++		ss->x[n] = value;
++	} else if (n == 29) {
++		ss->fp = value;
++	} else if (n == 30) {
++		ss->lr = value;
++	} else if (sp) {
++		ss->sp = value;
++	}
++}
++
++static bool
++penang_pac_user_trap(arm_saved_state_t *state, uint32_t instr)
++{
++	if (!is_saved_state64(state) || !PSR64_IS_USER64(get_saved_state_cpsr(state))) {
++		return false;
++	}
++	arm_saved_state64_t *ss = saved_state64(state);
++	uint64_t pc = ss->pc;
++	uint32_t replacement = penang_pac_rewrite(instr);
++	if (replacement != 0) {
++		if (penang_pac_patch_page(pc, instr, replacement)) {
++			if (__atomic_fetch_add(&penang_pac_patched, 1, __ATOMIC_RELAXED) < 8) {
++				printf("penang pac: pid %d pc %llx %08x -> %08x\n", proc_selfpid(), pc, instr, replacement);
++			}
++			return true;                                    /* pc unchanged: the native instruction runs next */
++		}
++		__atomic_fetch_add(&penang_pac_patch_failed, 1, __ATOMIC_RELAXED);
++	}
++	if ((instr & 0xff200400U) == 0xf8200400U) {
++		/* ldraa/ldrab Xt, [Xn|SP, #simm10 << 3]{!}: the load, and Xn = address with writeback */
++		unsigned rt = instr & 31U, rn = (instr >> 5) & 31U;
++		int64_t offset = (int64_t)(((instr >> 12) & 0x1ffU) | ((instr >> 22) & 1U) << 9);
++		if (offset & 0x200) {
++			offset -= 0x400;
++		}
++		uint64_t address = penang_pac_reg(ss, rn, true) + (uint64_t)(offset * 8);
++		uint64_t value;
++		if (copyin((user_addr_t)address, &value, sizeof(value)) != 0) {
++			return false;                                   /* the fault is the process's own: EXC_BAD_INSTRUCTION */
++		}
++		if (instr & (1U << 11)) {
++			penang_pac_set_reg(ss, rn, address, true);
++		}
++		penang_pac_set_reg(ss, rt, value, false);
++		ss->pc = pc + 4;
++		__atomic_fetch_add(&penang_pac_emulated, 1, __ATOMIC_RELAXED);
++		return true;
++	}
++	if (replacement == 0 && __atomic_fetch_add(&penang_pac_unhandled, 1, __ATOMIC_RELAXED) < 16) {
++		printf("penang pac: unhandled pid %d pc %llx %08x\n", proc_selfpid(), pc, instr);
++	}
++	return false;
++}
++
+ static void
+ handle_uncategorized(arm_saved_state_t *state)
+ {
+@@ -1254,6 +1389,10 @@
+ 		}
+ 	}
+ 
++	if (penang_pac_user_trap(state, instr)) {
++		return;
++	}
++
+ 	/*
+ 	 * Check for GDB breakpoint via illegal opcode.
+ 	 */

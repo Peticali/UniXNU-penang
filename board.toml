@@ -9,7 +9,9 @@ description = "Motorola moto g53 5G (XT2335, SM4350 holi): iOS 26 without PAC"
 kit = "penang"
 
 [components]
-include = ["ArmDTPlatform", "ArmCpu", "SoftwareAES", "XnuPrelink", "DarwinBoot"]
+include = ["ArmDTPlatform", "ArmCpu", "SoftwareAES", "XnuPrelink", "DarwinBoot", "ShengUfs", "RamBlock"]
+# ShengUfs (feeds.toml: the penang fork) publishes the root IOMedia; RamBlock is the Data-disk class the source-storage
+# runtime registers third (build-sheng-source-storage.py compiles it unconditionally), as on UniXNU-sheng.
 
 [kernel]
 defconfig = "penang_defconfig"
@@ -30,6 +32,11 @@ archives = [
   # The symbol-bearing RELEASE comparison kernel the iPadOS 27 prelink pairs through (as UniXNU-sheng), with LTO
   # like Apple's kernel: the non-LTO one left 1955 stubbed functions (profile baseline: 24) and corecrypto panicked
   # calling mach_absolute_time. Needs scripts/setup-ld64-lto.sh (LTO ld64 + libLTO of the toolchain's LLVM).
+  # UFS root (as UniXNU-sheng's iPadOS 27 list): the transport component, the source-storage runtime with the signed
+  # root policies of this profile, and the Data-disk class.
+  "component:ShengUfs",
+  "build-sheng-source-storage.py --policy-dir scripts/policies/ipados-27.0.1-24A446",
+  "component:RamBlock",
   "/mnt/nvme/xnu-build/unixnu/UniXNU-penang/scripts/build-reference-lto.py --tree .",
 ]
 
@@ -67,9 +74,15 @@ packages = ["{uefi}", "{tree}/package", "{tree}/drivers/DarwinBoot", "{edk2}"]
 DEVICE_MODEL = "penang"
 
 [payload]
+# The signed root-policy sidecar (OS and SystemOS headers of this profile) that build-sheng-source-storage.py assembles;
+# DarwinBoot places it at /chosen/memory-map/RootPolicies, which the source-storage runtime authenticates.
+root_policies = "{tree}/build/sheng-source-storage/root-policies.bin"
 # Bring-up (UniXNU docs/guide/debugging.md#green-bar): blue bar = kernel entry ran (MMU off), magenta = just before the MMU
 # is enabled; a PSCI reset 6 s after MMU enable proves that stage.
 panic_screen = true   # fits only with no reset probe: cave after stage 2 leaves 0xa30 bytes for 0xa27
+# Unattended runs: the panic screen stays 12 s, then resets the board (PSCI) back to fastboot; its text is also in the
+# ramoops console ring, which tools/uefi-run.sh pulls from Linux afterwards (patches/unixnu/0012, xnu/penang-ramoops-console).
+panic_reset_delay = 12
 # entry_probe_reset_delay = 6
 # entry_probe_reset_after = "_kernel_startup_initialize_upto"   # past kdp_init; this is the SYSCTL round   FROZE: the SYSCTL startup round (alternate_debugger_init is a no-op)
 # entry_probe_reset_in = "_kernel_bootstrap_thread"
@@ -79,7 +92,11 @@ volume = "UNIXNU"
 size_mib = 112   # kernel.macho is 95 MB; keeps the RAM boot image small for the ABL
 loader = "firmware"
 title = "UniXNU"
-kernel_args = ["-v", "serial=3", "use_contiguous_hint=0", "kt_fixed_zones=120", "-no_slto_panic"]   # 4K kernel in a fileset laid out on 16K boundaries: arm_vm_init.c:1107 hint-change assert on late protection changes
+# fips_mode=64 (NOINTEG: fipspost_post_run_all skips fipspost_post_integrity on bit 6; bit 4 = 16 is FORCEFAIL): launchd's "fips" boot task runs
+# /usr/libexec/cc_fips_test without arguments, which reads this boot-arg. Its integrity test hashes libcorecrypto's
+# __TEXT, which the runtime PAC rewrite (penang-user-pac-trap-and-patch) changes, so it failed with -74 and launchd
+# panicked (u27-sysos6); every known-answer test still runs and passed.
+kernel_args = ["-v", "serial=3", "use_contiguous_hint=0", "kt_fixed_zones=120", "-no_slto_panic", "native-source-storage=1", "native-ufs-root=1", "native-ufs-soc=4350", "fips_mode=64", "data-persist=2"]   # 4K kernel in a fileset laid out on 16K boundaries: arm_vm_init.c:1107 hint-change assert on late protection changes
 
 [package]
 # The UniXNU checkout, relative to this repository: scripts/package.sh reads it.
@@ -102,6 +119,10 @@ owned_memory_size = "0x80000000"
 # Supply the board's identity seed through --unique-chip-id.
 chip_id = "207"
 unique_chip_id = "required"
+# The Data seed travels packed (DBRDISK1); its 95 GiB container is a "big" disk that NativeRamBlock serves only through the
+# persistent store, so persistent_data (no ephemeral-storage) and data-persist=2 go together.
+packed_data_ramdisk = true
+persistent_data = true
 
 # The penang differences to UniXNU's ipados-27.0.1-24A446 profile: the SM4350 (Cortex-A76/A55) has no pointer
 # authentication. The kernel is built and prelinked exactly as UniXNU does (arm64e, the profile's own kernelcache);
@@ -132,3 +153,11 @@ ramdisk_compression = "uefi-chunks"
 # No ApplePMGRNub will appear (no Apple power manager): without it AMFI waits for one and panics "AMFI: No PMGR"
 # (ConfigurationSettings.cpp:392), as UniXNU's vermeer record documents.
 "vmm-present" = 1
+
+[userdata]
+# The g53's userdata (UFS LUN 4, 4 KiB blocks; stock GPT in xnu-port/fw/gpt.bin): it starts after super at LBA 0x12e600
+# and grows to the end of the LUN. LUN 4 holds 30615552 blocks, the backup GPT takes the last 6, so the last LBA is
+# 0x1d327fa: 29377019 blocks = 0x1C041FB000 bytes, the size fastbootd reports for userdata.
+first_lba = 0x12e600
+last_lba = 0x1d327fa
+lba_bytes = 4096

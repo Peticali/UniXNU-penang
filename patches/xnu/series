@@ -10,3 +10,11 @@ nopac-fileset-unmapped-strip.patch
 nopac-arm64-kernel-ldflags.patch
 upstream-clang-ptrauth-3args.patch
 penang-framebuffer-console.patch
+source-storage-runtime.patch
+penang-ml-static-mfree-prepare.patch
+penang-thread-kernel-frames.patch
+penang-user-pac-trap-and-patch.patch
+penang-ramoops-console.patch
+penang-unmapped-stub-slot.patch
+penang-fips-nointeg.patch
+penang-initproc-user-report.patch
