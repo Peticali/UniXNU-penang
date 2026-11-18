@@ -122,3 +122,8 @@ unique_chip_id = "required"
 # The ABL drops a RAM boot of ~115 MB mid-transfer; UniXNU's chunked UEFI compression packs the 112 MiB volume to ~29 MB
 # (UniXNURamDiskDxe decodes chunks on demand; patches/unixnu/0001 finds the packed header after vendor_boot's ramdisk).
 ramdisk_compression = "uefi-chunks"
+
+["adt"."chosen"."u32"]
+# iBoot's CTRR policy: 0 = the SoC has no CTRR, kernel text is not hardware-locked (as the reference board). Without it
+# ml_unsafe_kernel_text_init leaves its flag unset and sdt_init asserts at machine_routines.c:3385 during bsd_init.
+"kernel-ctrr-to-be-enabled" = 0
