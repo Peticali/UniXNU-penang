@@ -1,0 +1,98 @@
+diff --git a/fileset_layout.py b/fileset_layout.py
+index 384818e..2ffbd60 100644
+--- a/fileset_layout.py
++++ b/fileset_layout.py
+@@ -115,6 +115,17 @@ class Layout:
+             raise ValueError('Native code would collide with collection data')
+         self.roots.pop('__TEXT_BOOT_EXEC', None)
+         code['size'] = code['filesize'] = code_end - code['va']
++        # PENANG: a native __DATA larger than the old kernel's data runs into the first retained kext's data. The
++        # original __PRELINK_INFO (the XML, moved below) sits just below the __DATA root: when it does, the __DATA
++        # root starts there instead (still after all native code, still before every retained kext's data).
++        data = self.roots['__DATA']
++        info0 = self.roots.get('__PRELINK_INFO')
++        if info0 and info0['va'] + info0['size'] == data['va'] and info0['va'] >= align(code_end):
++            grow = data['va'] - info0['va']
++            data['va'] -= grow
++            data['fileoff'] -= grow
++            data['size'] += grow
++            data['filesize'] = data.get('filesize', 0) + grow
+         self.reserve('__DATA', self.roots['__DATA']['va'])
+         link = self.roots['__LINKEDIT']
+         for name in ('__LINKINFO', '__LINKEDIT'):
+@@ -230,8 +241,10 @@ class Layout:
+             begin, end = self.placements[segment['name']], self.end(segment['name'])
+             if begin % PAGE:
+                 raise ValueError('Unaligned native segment')
+-            if any(begin < e and b < end for b, e in self.occupied + placed):
+-                raise ValueError(f'Native {segment["name"]} overlaps a retained segment')
++            hits = [(b, e) for b, e in self.occupied + placed if begin < e and b < end]
++            if hits:
++                raise ValueError(f'Native {segment["name"]} {begin:#x}-{end:#x} ({end - begin:#x} bytes) overlaps a retained segment '
++                                 f'{hits[0][0]:#x}-{hits[0][1]:#x}: room {hits[0][0] - begin:#x} bytes')
+             if not any(s['va'] <= begin and end <= s['va'] + s['size'] for s in self.roots.values()):
+                 raise ValueError(f'Native {segment["name"]} is outside collection mappings')
+             placed.append((begin, end))
+@@ -306,8 +319,15 @@ def relocate_native(data, layout):
+             raise ValueError(f'Duplicate split-segment site {source:#x}')
+         written.add(source)
+         if kind in (2, 13):
+-            if source not in fixups or fixups[source][0] != target:
++            if source not in fixups:
+                 raise ValueError(f'Split-segment pointer disagrees with fixup at {source:#x}')
++            if fixups[source][0] != target:
++                # PENANG: a static kernel's split records name a section-end pointer (section$end) by the section's
++                # start; the value in the file is right, and moves with that section
++                if getattr(native, '_split_fixups', None) is not None and fixups[source][1] == 0:
++                    new_target += fixups[source][0] - target
++                else:
++                    raise ValueError(f'Split-segment pointer disagrees with fixup at {source:#x}')
+             pointers[new_source] = (new_target,) + fixups[source][1:]
+             counts['pointers'] += 1
+             continue
+diff --git a/fileset_segmented.py b/fileset_segmented.py
+index 00ae54b..45e0014 100644
+--- a/fileset_segmented.py
++++ b/fileset_segmented.py
+@@ -293,6 +293,9 @@ class SegmentedEmit(Emit):
+         # corecrypto authenticates the relocated __text bytes in a fileset.
+         code = next(s for s in self.native.sections if s['segment'] == '__TEXT_EXEC' and s['name'] == '__text')
+         seals = [s for s in self.native.sections if s['name'] == '__fips_hmacs']
++        if not seals:
++            self.report['corecrypto_hmac_sha256'] = None      # PENANG: no in-kernel FIPS seal (fips_mode skips it)
++            return
+         if len(seals) != 1 or seals[0]['size'] != 32:
+             raise ValueError('Expected one 32-byte corecrypto HMAC field')
+         code_at = self.layout.translate(code['va']) - self.cache.base
+diff --git a/kc_image.py b/kc_image.py
+index 1407d8e..09120e5 100644
+--- a/kc_image.py
++++ b/kc_image.py
+@@ -132,7 +132,26 @@ class Image:
+         """Chained fixups: site va -> (target va, auth, key, diversity, address diversity)."""
+         found = self.command(LC_DYLD_CHAINED_FIXUPS)
+         if not found:
+-            return {}
++            # PENANG: a static arm64 kernel (linked at its load address, no chained fixups, no relocations) still
++            # names every 64-bit pointer in its split-segment records (kind 2/13): the value in the file is the
++            # target. Those become plain, unauthenticated fixups.
++            if getattr(self, '_split_fixups', None) is not None:
++                return self._split_fixups
++            self._split_fixups = {}
++            try:
++                from fileset_layout import split_references
++                records = list(split_references(self))
++            except ValueError:
++                return self._split_fixups
++            sections = getattr(self, 'sections', [])
++            def address(ordinal, offset):
++                return self.base + offset if ordinal == 0 else sections[ordinal - 1]['va'] + offset
++            for kind, si, so, ti, to in records:
++                if kind in (2, 13):
++                    site = address(si, so)
++                    target = int.from_bytes(self.read(site, 8), 'little')
++                    self._split_fixups[site] = (target, 0, None, None, None)
++            return self._split_fixups
+         dataoff, _ = struct.unpack_from('<II', self.data, found[0] + 8)
+         _, starts_offset, _, _, imports, _, _ = struct.unpack_from('<7I', self.data, dataoff)
+         if imports:

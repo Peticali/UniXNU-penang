@@ -8,3 +8,6 @@ CONFIG_XNU_ARMCPU=y
 CONFIG_XNU_CRYPTO_BOOTSTRAP="source"
 # CONFIG_XNU_NATIVE_UFS is not set
 # CONFIG_XNU_NATIVE_ADRENO is not set
+# As UniXNU-sheng: the native kernel keeps chained fixups, which XnuPrelink uses to place it in the collection
+CONFIG_XNU_KERNEL_CHAINED_FIXUPS=y
+CONFIG_XNU_DT_PANIC_REGION=y
