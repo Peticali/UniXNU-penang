@@ -1,8 +1,8 @@
 diff --git a/fixtures/fileset-24A446-symbols.json b/fixtures/fileset-24A446-symbols.json
-index bcc5ee9..fc2ff08 100644
+index bcc5ee9..82c06df 100644
 --- a/fixtures/fileset-24A446-symbols.json
 +++ b/fixtures/fileset-24A446-symbols.json
-@@ -1095,6 +1095,1049 @@
+@@ -1095,6 +1095,1056 @@
        "original_sha256": "461f0cd8c82fda303d244bd2e7d866dfa0a3a0e88e4e29eeaa32547988cb1a92",
        "native_symbol": "_ml_io_read8",
        "evidence": "Loads and returns one byte at x0. Directly precedes ml_io_read16, ml_io_read32 and ml_io_read64, which have the same shape for their widths. Source osfmk/arm64/machine_routines.c ml_io_read8; the native development build adds its timing checks around the same read."
@@ -1049,10 +1049,17 @@ index bcc5ee9..fc2ff08 100644
 +      "original_sha256": "1c44519496e022b6548fb62ead2861ef6b39abc75faa1981321af97badd56c69",
 +      "native_symbol": "__ZN9IOService33getSystemStateNotificationServiceEv",
 +      "evidence": "Getter returning one global (bti; adrp; ldr x0; ret), the run of four getters that ends right before IOService::setPlatform (0xfffffe000b46f004, paired): in native order getPlatform, getPMRootDomain, getResourceService, getSystemStateNotificationService, then setPlatform. Position 4 of 4. Source: iokit/Kernel/IOService.cpp. AppleMobileFileIntegrity called the first one from a thread call (panic on the device)."
++    },
++    {
++      "original": "0xfffffe000ad9a1bc",
++      "original_size": 12,
++      "original_sha256": "fc6f7c0c2557b2070883206fc4291d2d57d292153d374f211ba35b96c4fa8b16",
++      "native_symbol": "_thread_call_allocate_with_priority",
++      "evidence": "Three-argument entry that tail-calls the next function with options 0 (mov w3, #0; b), and that next function is thread_call_allocate_with_options (paired); the allocation stores func at +88 and param0 at +96. Native order is the same: thread_call_allocate_with_priority, then thread_call_allocate_with_options. Source: osfmk/kern/thread_call.c. Imported by IOSurface's start (panic on the device)."
      }
    ],
    "data": [
-@@ -1271,6 +2314,24 @@
+@@ -1271,6 +2321,24 @@
        "native_symbol": "_gPESerialBaud",
        "addend": 0,
        "evidence": "32-bit global holding -1 in the original image. IOSerialFamily reads it when it sets a new tty up, takes 9600 when it is -1 and stores the result in t_ispeed and t_ospeed. Source pexpert/gen/pe_gen.c int32_t gPESerialBaud = -1, exported in config/Unsupported.exports; the kernel itself has no reader in the original image."
