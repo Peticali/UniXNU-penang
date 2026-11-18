@@ -35,8 +35,9 @@ BTI = {0xd503241f, 0xd503245f, 0xd503249f, 0xd50324df}
 MIN_WORDS = 4
 
 
-def normalize(words):
+def normalize(words, base=0, refs=None):
     out, i = [], 0
+    pages = {}
     while i < len(words):
         w = words[i]
         if w in BTI:
@@ -48,6 +49,16 @@ def normalize(words):
                 and words[i + 4] & 0xffffff9f == 0xd4388e00):   # brk #0xc470..0xc473
             i += 5
             continue
+        pc = base + 4 * i
+        if refs is not None:
+            if w & 0x7c000000 == 0x14000000:
+                refs.append(pc + ((((w & 0x3ffffff) ^ 0x2000000) - 0x2000000) << 2))
+            elif w & 0x9f000000 == 0x90000000:
+                imm = ((w >> 29) & 3) | (((w >> 5) & 0x7ffff) << 2)
+                pages[w & 31] = (pc & ~0xfff) + (((imm ^ 0x100000) - 0x100000) << 12)
+            elif (w & 0x7f800000 == 0x11000000 or w & 0x3b000000 == 0x39000000) and (w >> 5) & 31 in pages:
+                scale = 0 if w & 0x7f800000 == 0x11000000 else (w >> 30) & 3
+                refs.append(pages[(w >> 5) & 31] + (((w >> 10) & 0xfff) << scale))
         if w & 0x7c000000 == 0x14000000:          # b / bl
             w &= 0xfc000000
         elif w & 0xff000010 == 0x54000000:        # b.cond
@@ -95,6 +106,7 @@ def main():
             continue
         native_shapes[normalize(words_of(native_image, start, fn['end']))].add(start)
         names.setdefault(start, name)
+    names.update({start: name for name, start in native.named_functions.items() if start not in names})
     fixture = json.loads(FIXTURE.read_text())
     pinned = {int(e['original'], 16) for e in fixture['functions']}
     proposals = []
@@ -113,7 +125,48 @@ def main():
                                        'PAC failure checks removed, PC-relative immediates masked) is unique among the '
                                        'original functions and equals exactly one native function, itself unique. '
                                        'Proposed by UniXNU-penang scripts/pair-normalized.py for a prelink stub.')})
-    print(f'stubbed originals: {len(stubbed)}; unique normalized pairs: {len(proposals)}')
+    # Second pass: shapes shared by several functions. A native candidate survives when every reference of the
+    # original that the prelink map already pairs (functions and data) is the same reference in the candidate.
+    pairing = json.loads((OUT / 'kernel/kernel.map.json').read_text())
+    known = {int(k, 16): int(v['native'], 16) for table in ('functions', 'data')
+             for k, v in pairing[table].items() if v.get('native')}
+    taken = {int(v['native'], 16) for v in pairing['functions'].values()}
+    native_by_shape = defaultdict(list)
+    for name, start in native.named_functions.items():
+        fn = native.functions.get(start)
+        if fn is not None and start not in taken:
+            native_by_shape[normalize(words_of(native_image, start, fn['end']))].append(start)
+    done = {int(p['original'], 16) for p in proposals}
+    used = {p['native_symbol'] for p in proposals}
+    for start in sorted(stubbed):
+        fn = original.functions.get(start)
+        if fn is None or start in pinned or start in done:
+            continue
+        orefs = []
+        shape = normalize(words_of(entry, start, fn['end']), start, orefs)
+        if len(shape) < 4 * 2:
+            continue
+        survivors = []
+        for cand in set(native_by_shape.get(shape, ())):
+            nrefs = []
+            normalize(words_of(native_image, cand, native.functions[cand]['end']), cand, nrefs)
+            if len(nrefs) != len(orefs):
+                continue
+            checked = [(known[o], n) for o, n in zip(orefs, nrefs) if o in known]
+            if checked and all(a == b for a, b in checked):
+                survivors.append((cand, len(checked)))
+        if len(survivors) == 1 and names.get(survivors[0][0]) not in used:
+            cand, count = survivors[0]
+            body = entry.read(start, fn['end'] - start)
+            used.add(names[cand])
+            proposals.append({'original': f'{start:#x}', 'original_size': len(body),
+                              'original_sha256': hashlib.sha256(body).hexdigest(), 'native_symbol': names[cand],
+                              'evidence': (f'Normalized code ({len(shape) // 4} instructions; BTI pads and upstream '
+                                           'clang\'s PAC failure checks removed) equals the native function, the only '
+                                           f'unpaired candidate of that shape whose {count} references already paired '
+                                           'by the prelink map (callees and data) are the same. Proposed by '
+                                           'UniXNU-penang scripts/pair-normalized.py for a prelink stub.')})
+    print(f'stubbed originals: {len(stubbed)}; normalized pairs: {len(proposals)}')
     for p in proposals[:40]:
         print(' ', p['original'], p['native_symbol'])
     if '--apply' in sys.argv and proposals:

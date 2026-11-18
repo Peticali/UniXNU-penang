@@ -1,8 +1,8 @@
 diff --git a/fixtures/fileset-24A446-symbols.json b/fixtures/fileset-24A446-symbols.json
-index bcc5ee9..592f174 100644
+index bcc5ee9..699d902 100644
 --- a/fixtures/fileset-24A446-symbols.json
 +++ b/fixtures/fileset-24A446-symbols.json
-@@ -1095,6 +1095,454 @@
+@@ -1095,6 +1095,482 @@
        "original_sha256": "461f0cd8c82fda303d244bd2e7d866dfa0a3a0e88e4e29eeaa32547988cb1a92",
        "native_symbol": "_ml_io_read8",
        "evidence": "Loads and returns one byte at x0. Directly precedes ml_io_read16, ml_io_read32 and ml_io_read64, which have the same shape for their widths. Source osfmk/arm64/machine_routines.c ml_io_read8; the native development build adds its timing checks around the same read."
@@ -454,6 +454,34 @@ index bcc5ee9..592f174 100644
 +      "original_sha256": "f668063ac0be5b7921daed7f5a0c9c893bba13e0cb75e9f17ff4e3492c7bc54a",
 +      "native_symbol": "_vnode_hold",
 +      "evidence": "Panics with 'vp %p holdcount overflow' naming 'vnode_hold' in 'vfs_subr.c'; takes the vnode hold reference. Source: bsd/vfs/vfs_subr.c. Imported by sandbox."
++    },
++    {
++      "original": "0xfffffe000b4724ec",
++      "original_size": 436,
++      "original_sha256": "b278b31cc6c230697b5f99cb51927ae30c228a547dbae335ba64e88d7c63f3c2",
++      "native_symbol": "__ZN9IOService23addMatchingNotificationEPK8OSSymbolP12OSDictionaryPFbPvS5_PS_P10IONotifierES5_S5_i",
++      "evidence": "Calls installNotification with an existing-services iterator as its seventh argument, then invokeNotifier on each existing service under the notifier lock (IORecursiveLock inlined as lck_mtx in the original), returning the notifier: the handler form of addMatchingNotification, followed in the original by waitForMatchingService as in IOService.cpp. Source: iokit/Kernel/IOService.cpp. Imported by sandbox (panic in its mac_policy_register callback) and AppleMobileFileIntegrity."
++    },
++    {
++      "original": "0xfffffe000ad69744",
++      "original_size": 16,
++      "original_sha256": "3fe2a0f96709e8269f551bca107efec1241d91fc047df3785aa28e27675d15e8",
++      "native_symbol": "_thread_block",
++      "evidence": "Normalized code (3 instructions; BTI pads and upstream clang's PAC failure checks removed) equals the native function, the only unpaired candidate of that shape whose 1 references already paired by the prelink map (callees and data) are the same. Proposed by UniXNU-penang scripts/pair-normalized.py for a prelink stub."
++    },
++    {
++      "original": "0xfffffe000af255e0",
++      "original_size": 12,
++      "original_sha256": "c5d483139ea73376ce4e2ed7d9b63e406d6876c9383ad2ea80d3af2a337bc98e",
++      "native_symbol": "_vnode_rele_ext",
++      "evidence": "Normalized code (2 instructions; BTI pads and upstream clang's PAC failure checks removed) equals the native function, the only unpaired candidate of that shape whose 1 references already paired by the prelink map (callees and data) are the same. Proposed by UniXNU-penang scripts/pair-normalized.py for a prelink stub."
++    },
++    {
++      "original": "0xfffffe000b4726c8",
++      "original_size": 12,
++      "original_sha256": "4d24d5f22e498d0549696c27cb003ccb83884ce8fee489833b32575bc436b838",
++      "native_symbol": "__ZN9IOService22waitForMatchingServiceEP12OSDictionaryy",
++      "evidence": "Normalized code (2 instructions; BTI pads and upstream clang's PAC failure checks removed) equals the native function, the only unpaired candidate of that shape whose 1 references already paired by the prelink map (callees and data) are the same. Proposed by UniXNU-penang scripts/pair-normalized.py for a prelink stub."
      }
    ],
    "data": [
