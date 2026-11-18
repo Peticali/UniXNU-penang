@@ -99,3 +99,8 @@ unique_chip_id = "required"
 "patch_series" = ["arch:patches/xnu/series", "soc:patches/xnu/series", "device:patches/xnu/series"]
 # The defconfig sets the crypto bootstrap (source, as UniXNU-sheng's iOS 26 defconfig).
 "config_fragments" = ["arch:configs/common.config", "soc:configs/sm4350.config"]
+
+["os_overrides"."ipados-27.0.1-24A446"]
+# The profile's prelink regression policy is qualified on UniXNU-sheng's pairing (Apple clang, LTO reference); this
+# Linux build (upstream clang, no-LTO reference) leaves a few more sites unpaired. The run's record lists them.
+"remove" = ["kernel.prelink.regression_policy"]

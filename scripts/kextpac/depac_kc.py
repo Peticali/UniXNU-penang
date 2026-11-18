@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """De-PAC an arm64e kernelcache fileset for a CPU without pointer authentication (ARMv8.2, e.g. Cortex-A76/A55).
 
-  depac_kc.py IN_KERNELCACHE OUT_KERNELCACHE [--only BUNDLE ...]
+  depac_kc.py IN_KERNELCACHE OUT_KERNELCACHE [--with-kernel] [--only BUNDLE ...]
 
 1. Code (every section with instructions, of every fileset entry, or only the named ones): the PAC forms that are
    UNDEFINED without FEAT_PAuth become their plain equivalents, one instruction for one, in place:
@@ -20,6 +20,9 @@ the userland; this tool adds the kernelcache fileset walk and the chained-fixup 
 import struct, sys, collections, hmac, hashlib
 
 src, dst = sys.argv[1], sys.argv[2]
+with_kernel = '--with-kernel' in sys.argv
+if with_kernel:
+    sys.argv.remove('--with-kernel')
 only = sys.argv[sys.argv.index('--only') + 1:] if '--only' in sys.argv else None
 kc = bytearray(open(src, 'rb').read())
 
@@ -35,7 +38,11 @@ def rewrite(i):
     if m2 in (0xd63f081f, 0xd63f0c1f): return 0xd63f0000 | rn << 5, 'blr'
     if i & 0xffffc000 == 0xdac10000: return 0xd503201f, 'nop'
     if (i & 0xff200400) in (0xf8200400, 0xf8a00400): raise SystemExit('ldraa/ldrab at an instruction: no 1:1 rewrite')
-    if i & 0xffe0fc00 == 0x9ac03000: raise SystemExit('pacga: no 1:1 rewrite')
+    # pacga Xd, Xn, Xm -> mov Xd, xzr: every generic signature is 0, so signing and checking still agree.
+    if i & 0xffe0fc00 == 0x9ac03000: return 0xaa1f03e0 | (i & 31), 'pacga-zero'
+    # msr/mrs of the PAC key registers (APIA/APIB/APDA/APDB/APGA: op0 3, op1 0, CRn 2, CRm 1..3): no keys here.
+    if (i & 0xfff00000) in (0xd5100000, 0xd5300000) and (i >> 16) & 7 == 0 and (i >> 12) & 15 == 2 and (i >> 8) & 15 in (1, 2, 3):
+        return (0xaa1f03e0 | (i & 31), 'key-mrs-zero') if i & 0x200000 else (0xd503201f, 'key-msr-nop')
     return None, None
 
 ncmds = struct.unpack_from('<I', kc, 16)[0]
@@ -55,8 +62,8 @@ for _ in range(ncmds):
 
 done = collections.Counter()
 for name, fo in entries:
-    if (only and name not in only) or name == 'com.apple.kernel':
-        continue                                    # (the kernel itself is replaced by the native one)
+    if (only and name not in only) or (name == 'com.apple.kernel' and not with_kernel):
+        continue                                    # (unless --with-kernel: a native arm64e kernel is rewritten too)
     nc = struct.unpack_from('<I', kc, fo + 16)[0]
     # corecrypto's FIPS POST checks HMAC-SHA256 (one zero-byte key) of its __TEXT_EXEC,__text against __fips_hmacs:
     # remember the field if it covers the original bytes, and seal the rewritten ones below (as XnuPrelink reseals).

@@ -1,8 +1,19 @@
 diff --git a/scripts/build-fileset-release-reference.py b/scripts/build-fileset-release-reference.py
-index 2e87000..1a855c1 100644
+index 2e87000..74ad078 100644
 --- a/scripts/build-fileset-release-reference.py
 +++ b/scripts/build-fileset-release-reference.py
-@@ -141,6 +141,15 @@ def main():
+@@ -119,6 +119,10 @@ def main():
+         misplaced = '\n\tboot_progress_user_breakpoint(state, esr);\n#if __has_feature(ptrauth_calls)'
+         if misplaced in text:
+             sleh.write_text(text.replace(misplaced, '\n#if __has_feature(ptrauth_calls)', 1))
++        if os.uname().sysname == 'Linux':
++            # The Linux source rewrites of the main build (upstream clang, GNU tools) on this private copy too.
++            subprocess.run(['python3', str(root / 'scripts/linux/prepare-xnu.py'), 'source'], check=True,
++                           env=dict(os.environ, UNIXNU_PREPARE_XNU=str(source)))
+         manifest = {str(p.relative_to(source)): hashlib.sha256(p.read_bytes()).hexdigest()
+                     for p in source.rglob('*') if p.is_file()}
+         (output/'source-sha256.json').write_text(json.dumps(manifest,indent=2)+'\n')
+@@ -141,6 +145,15 @@ def main():
                                          *map(str,archives),*(f'-Wl,-force_load,{p}' for p in forced)]),
          'XNU_EXTERNAL_KERNEL_ARCHIVES='+' '.join(map(str,archives+forced)),
          f'OBJROOT={output}/{mode}-obj',f'SYMROOT={output}/{mode}-sym',f'DSTROOT={output}/{mode}-dst']

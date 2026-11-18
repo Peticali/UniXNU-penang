@@ -23,14 +23,17 @@ Known: the system resets ~40-70 s after SpringBoard (PS_HOLD), as on the old shi
 
 - `patches/unixnu/0001-ramdisk-find-payload-inside-initrd.patch`: penang's ABL puts vendor_boot's ramdisk before the
   boot image's, so the payload FAT does not start at `linux,initrd-start`; search it (4-byte aligned).
-- `patches/unixnu/0002-darwinboot-32mb-base-for-16k-kernel.patch`: only for the interim 16 KiB-page penang kernel
-  (start.s maps 32 MiB L2 blocks from physBase).
 - `patches/unixnu/0003-kernel-xnu-arch-override.patch`: `[kernel] xnu_arch` builds the xnu-12377 (arm64e) series as
   plain arm64, with the Linux deployment target taken from the profile.
 - `patches/unixnu/0004-xnuprelink-penang-layout.patch`: the native `__DATA` may grow into the old `__PRELINK_INFO`.
 
-Kernelcache: `scripts/kextpac/make-kernelcache.sh` fetches the profile's kernelcache (pinned sha256) and rewrites it
-without PAC, resealing corecrypto's FIPS HMAC; `scripts/env.sh` hands it to the prelink.
+- `patches/unixnu/0005-fileset-reference-linux-host.patch`: the RELEASE comparison kernel builds on Linux (host make
+  arguments, the Linux source rewrites on its private copy).
+
+Build: `. scripts/env.sh; cd ../UniXNU; ./unixnu kernel -D ../UniXNU-penang` (the arm64e kernel and the prelink, exactly
+as UniXNU), then `scripts/kextpac/depac-kernel.sh` rewrites the finished kernel.macho without PAC (the arm64e kernel
+and the kexts: PAC branches and returns 1:1, pacga and the PAC key registers to zero, auth fixups plain, corecrypto's
+FIPS HMAC resealed), then `./unixnu payload`.
 
 ## Boot
 

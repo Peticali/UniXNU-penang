@@ -1,5 +1,5 @@
 diff --git a/scripts/linux/prepare-xnu.py b/scripts/linux/prepare-xnu.py
-index efef7a6..2695625 100755
+index efef7a6..df9d14b 100755
 --- a/scripts/linux/prepare-xnu.py
 +++ b/scripts/linux/prepare-xnu.py
 @@ -8,6 +8,7 @@
@@ -10,6 +10,15 @@ index efef7a6..2695625 100755
  from pathlib import Path
  import shutil
  import subprocess
+@@ -15,7 +16,7 @@ import sys
+ 
+ HERE = Path(__file__).resolve().parent
+ ROOT = HERE.parents[1]
+-XNU = ROOT / '.cache/xnu-work'
++XNU = Path(os.environ.get('UNIXNU_PREPARE_XNU', ROOT / '.cache/xnu-work'))   # another copy: the release reference
+ FAKEROOT = ROOT / '.cache/fakeroot'
+ # llvm-project at the commit setup-toolchain.py builds clang from, and the Libc that macOS 14.6 ships with
+ # xnu-10063.141.1 (distribution-macOS release.json).
 @@ -120,7 +121,8 @@ def build_cc_kext():
      objects.mkdir(parents=True, exist_ok=True)
      out.parent.mkdir(parents=True, exist_ok=True)
