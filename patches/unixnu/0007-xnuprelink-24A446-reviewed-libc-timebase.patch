@@ -1,5 +1,5 @@
 diff --git a/fixtures/fileset-24A446-symbols.json b/fixtures/fileset-24A446-symbols.json
-index bcc5ee9..de240b5 100644
+index bcc5ee9..61ebfa7 100644
 --- a/fixtures/fileset-24A446-symbols.json
 +++ b/fixtures/fileset-24A446-symbols.json
 @@ -1095,6 +1095,1238 @@
@@ -1241,7 +1241,7 @@ index bcc5ee9..de240b5 100644
      }
    ],
    "data": [
-@@ -1271,6 +2503,24 @@
+@@ -1271,6 +2503,30 @@
        "native_symbol": "_gPESerialBaud",
        "addend": 0,
        "evidence": "32-bit global holding -1 in the original image. IOSerialFamily reads it when it sets a new tty up, takes 9600 when it is -1 and stores the result in t_ispeed and t_ospeed. Source pexpert/gen/pe_gen.c int32_t gPESerialBaud = -1, exported in config/Unsupported.exports; the kernel itself has no reader in the original image."
@@ -1263,6 +1263,12 @@ index bcc5ee9..de240b5 100644
 +      "native_symbol": "__ZN17IONVRAMController10gMetaClassE",
 +      "addend": 0,
 +      "evidence": "AppleARMPlatform's metaclass constructor for 'AppleARMNORNVRAM' passes it as the superclass metaclass (OSMetaClass(name, super, 0xa0)); AppleARMNORNVRAM is an IONVRAMController. Lies among the IOKit gMetaClass objects (IOBufferMemoryDescriptor before, OSObject after). Source: iokit/Kernel/IONVRAMController.cpp OSDefineMetaClassAndAbstractStructors."
++    },
++    {
++      "original": "0xfffffe000b890900",
++      "native_symbol": "_vnop_searchfs_desc",
++      "addend": 0,
++      "evidence": "vnodeop_desc whose vdesc_name points to \"vnop_searchfs\" (offset 0 until VFS numbers the descriptors at boot). APFS lists it in its vnodeopv_desc; left unbound, the entry pointed to the original copy, whose vdesc_offset VFS never assigns, and vfs_fsadd panicked 'bad operation' (kpi_vfs.c:1132) on the device. Source: bsd/vfs/vnode_if.c vnop_searchfs_desc."
      }
    ],
    "sites": [
