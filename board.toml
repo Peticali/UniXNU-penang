@@ -68,12 +68,12 @@ DEVICE_MODEL = "penang"
 [payload]
 # Bring-up (UniXNU docs/guide/debugging.md#green-bar): blue bar = kernel entry ran (MMU off), magenta = just before the MMU
 # is enabled; a PSCI reset 6 s after MMU enable proves that stage.
-panic_screen = false   # its code (0xa27 bytes with upstream clang) does not fit the kernel padding (0x9d0)
-entry_probe_reset_delay = 6
-entry_probe_reset_after = "_kernel_startup_initialize_upto"   # past kdp_init; this is the SYSCTL round
-entry_probe_reset_in = "_kernel_bootstrap_thread"
-entry_probe_reset_before = false
-entry_probe_reset_occurrence = 2
+panic_screen = true   # fits only with no reset probe: cave after stage 2 leaves 0xa30 bytes for 0xa27
+# entry_probe_reset_delay = 6
+# entry_probe_reset_after = "_kernel_startup_initialize_upto"   # past kdp_init; this is the SYSCTL round   FROZE: the SYSCTL startup round (alternate_debugger_init is a no-op)
+# entry_probe_reset_in = "_kernel_bootstrap_thread"
+# entry_probe_reset_before = false
+# entry_probe_reset_occurrence = 2
 volume = "UNIXNU"
 size_mib = 112   # kernel.macho is 95 MB; keeps the RAM boot image small for the ABL
 loader = "firmware"
