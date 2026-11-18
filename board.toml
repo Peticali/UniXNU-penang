@@ -87,7 +87,9 @@ unixnu = "../UniXNU"
 
 [payload.adt]
 # XNU's window: 0xe8000000-0x180000000 (uefi-penang reserves the TZ apps region and GPU pool below it).
-owned_memory_size = "0x98000000"
+# 2 GiB from 0xe8000000: one free run below the firmware's top-down allocations (the loaded kernel.macho), so DarwinBoot
+# finds it without the excluded-range table, which only the macOS profile's XNU reads ("Out of Resources" at 0x98000000).
+owned_memory_size = "0x80000000"
 # Supply the board's identity seed through --unique-chip-id.
 chip_id = "207"
 unique_chip_id = "required"
