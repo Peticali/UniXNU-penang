@@ -3,6 +3,8 @@
 arch:../../../patches/xnu-12377/darwin26-syscalls.patch
 arch:../../../patches/xnu-12377/darwin26-kpi.patch
 arch:../../../patches/xnu-12377/darwin26-shared-region.patch
+# From UniXNU-sheng (via UniXNU-uke): the stack shift the iPadOS 27 reviewed sites bind
+native-4k-stack-shift.patch
 # penang:
 nopac-fileset-unmapped-strip.patch
 nopac-arm64-kernel-ldflags.patch

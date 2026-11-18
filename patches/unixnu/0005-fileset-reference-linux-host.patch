@@ -1,0 +1,20 @@
+diff --git a/scripts/build-fileset-release-reference.py b/scripts/build-fileset-release-reference.py
+index 2e87000..1a855c1 100644
+--- a/scripts/build-fileset-release-reference.py
++++ b/scripts/build-fileset-release-reference.py
+@@ -141,6 +141,15 @@ def main():
+                                         *map(str,archives),*(f'-Wl,-force_load,{p}' for p in forced)]),
+         'XNU_EXTERNAL_KERNEL_ARCHIVES='+' '.join(map(str,archives+forced)),
+         f'OBJROOT={output}/{mode}-obj',f'SYMROOT={output}/{mode}-sym',f'DSTROOT={output}/{mode}-dst']
++    if os.uname().sysname == 'Linux':
++        # The Linux host arguments of build-xnu-4k-baseline.sh (what a Mac answers itself: host compiler, mig,
++        # memory and CPU counts, the profile runtime archive).
++        clt = Path(os.environ['CLT_PREFIX'])
++        env.update(PLATFORM='iPhoneOS', HOST_CC=str(clt/'bin/xnu-host-cc'), MIGCOM=str(clt/'libexec/migcom'))
++        args += ['TIGHTBEAMC=tightbeamc-not-supported', 'BUILD_DSYM=0',
++                 f'MEMORY_SIZE={os.sysconf("SC_PHYS_PAGES") * os.sysconf("SC_PAGE_SIZE")}',
++                 f'SYSCTL_HW_PHYSICALCPU={os.cpu_count()}', f'SYSCTL_HW_LOGICALCPU={os.cpu_count()}',
++                 f'LD_KERNEL_LIBS={sdk}/usr/local/lib/kernel/libcc_kext.a']
+     (output/f'{mode}-command.json').write_text(json.dumps(args,indent=2)+'\n')
+     with (output/f'{mode}-build.log').open('w') as log:
+         result = subprocess.run(args,cwd=root,env=env,stdout=log,stderr=subprocess.STDOUT)

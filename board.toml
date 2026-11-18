@@ -27,6 +27,9 @@ archives = [
   "build-software-aes-bindings.py",
   "build-mockfs-fixture.py",
   "build-libpthread-kernel.py",
+  # The symbol-bearing RELEASE comparison kernel the iPadOS 27 prelink pairs through (as UniXNU-sheng).
+  # Without --lto: the Linux ld64 (cctools-port, built --disable-lto-support) cannot link LLVM bitcode.
+  "build-fileset-release-reference.py --tree .",
 ]
 
 [device_tree]
