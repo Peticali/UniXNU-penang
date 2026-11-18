@@ -1,0 +1,16 @@
+diff --git a/scripts/unixnu/kernel.py b/scripts/unixnu/kernel.py
+index 7858f42..c886d0a 100644
+--- a/scripts/unixnu/kernel.py
++++ b/scripts/unixnu/kernel.py
+@@ -72,7 +72,10 @@ def version_env(modules, ctx=None):
+         if root.get('app_volume_uuid'):
+             env['UNIXNU_ROOT_APP_UUID'] = root['app_volume_uuid']
+         env['UNIXNU_IPSW_BUILD'] = ctx.board.get('ipsw', {}).get('build', '')
+-        env['UNIXNU_XNU_ARCH'] = load_toml(ctx.profile_roots['arch'] / 'profile.toml').get('arch', {}).get('name', 'arm64')
++        # [kernel] xnu_arch builds another slice than the arch profile's name, e.g. the xnu-12377 (arm64e) patch series
++        # as plain arm64 for a CPU without pointer authentication.
++        env['UNIXNU_XNU_ARCH'] = (ctx.board.get('kernel', {}).get('xnu_arch')
++                                  or load_toml(ctx.profile_roots['arch'] / 'profile.toml').get('arch', {}).get('name', 'arm64'))
+     return env
+ 
+ 
