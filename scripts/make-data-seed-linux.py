@@ -95,6 +95,10 @@ def main():
                          'containers/Data/System', 'containers/Shared/SystemGroup', 'containers/Temp'):
                 (mount / name).mkdir(parents=True, exist_ok=True)
             (mount / 'tmp').chmod(0o1777)
+            # mobile's own tmp (launchd's fixup-mobile-tmp skips an existing directory): owned by mobile, as UniXNU-opi5plus found,
+            # or the daemons that run as mobile (biomed, callservicesd, nsurlsessiond) exit 1 at startup and backboardd waits on biomed.
+            os.chown(mount / 'mobile/tmp', 501, 501)
+            (mount / 'mobile/tmp').chmod(0o755)
             if args.skip_setup:
                 merge(mount, 'mobile', 'com.apple.purplebuddy', dict(SetupDone=True,
                       SetupFinishedAllSteps=True, SetupVersion=11, daemonizeNeedsToRun=False))

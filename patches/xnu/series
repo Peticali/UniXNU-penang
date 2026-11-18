@@ -23,3 +23,4 @@ penang-mobile-graphics-client-2022.patch
 penang-posix-spawnattr-darwin26.patch
 penang-spawn-badexec-report.patch
 penang-user-pac-header-emulate.patch
+penang-owner-dataprotect.patch
