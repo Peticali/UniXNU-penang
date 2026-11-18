@@ -18,3 +18,4 @@ penang-ramoops-console.patch
 penang-unmapped-stub-slot.patch
 penang-fips-nointeg.patch
 penang-initproc-user-report.patch
+penang-lockdown-mode-public-sysctl.patch
