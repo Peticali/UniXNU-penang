@@ -79,7 +79,7 @@ volume = "UNIXNU"
 size_mib = 112   # kernel.macho is 95 MB; keeps the RAM boot image small for the ABL
 loader = "firmware"
 title = "UniXNU"
-kernel_args = ["-v", "serial=3"]
+kernel_args = ["-v", "serial=3", "use_contiguous_hint=0"]   # 4K kernel in a fileset laid out on 16K boundaries: arm_vm_init.c:1107 hint-change assert on late protection changes
 
 [package]
 # The UniXNU checkout, relative to this repository: scripts/package.sh reads it.
