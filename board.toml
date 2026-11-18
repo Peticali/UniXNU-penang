@@ -106,3 +106,8 @@ unique_chip_id = "required"
 # The profile's prelink regression policy is qualified on UniXNU-sheng's pairing (Apple clang, LTO reference); this
 # Linux build (upstream clang, no-LTO reference) leaves a few more sites unpaired. The run's record lists them.
 "remove" = ["kernel.prelink.regression_policy"]
+
+[bootimg.image]
+# The ABL drops a RAM boot of ~115 MB mid-transfer; UniXNU's chunked UEFI compression packs the 112 MiB volume to ~29 MB
+# (UniXNURamDiskDxe decodes chunks on demand; patches/unixnu/0001 finds the packed header after vendor_boot's ramdisk).
+ramdisk_compression = "uefi-chunks"
