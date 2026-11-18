@@ -67,7 +67,7 @@ DEVICE_MODEL = "penang"
 
 [payload]
 volume = "UNIXNU"
-size_mib = 192
+size_mib = 112   # kernel.macho is 95 MB; keeps the RAM boot image small for the ABL
 loader = "firmware"
 title = "UniXNU"
 kernel_args = ["-v", "serial=3"]
@@ -86,6 +86,8 @@ unixnu = "../UniXNU"
 # remove = ["payload.root_policies"]
 
 [payload.adt]
+# XNU's window: 0xe8000000-0x180000000 (uefi-penang reserves the TZ apps region and GPU pool below it).
+owned_memory_size = "0x98000000"
 # Supply the board's identity seed through --unique-chip-id.
 chip_id = "207"
 unique_chip_id = "required"
