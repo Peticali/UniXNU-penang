@@ -1,8 +1,8 @@
 diff --git a/fixtures/fileset-24A446-symbols.json b/fixtures/fileset-24A446-symbols.json
-index bcc5ee9..cb424f9 100644
+index bcc5ee9..a47489f 100644
 --- a/fixtures/fileset-24A446-symbols.json
 +++ b/fixtures/fileset-24A446-symbols.json
-@@ -1095,6 +1095,27 @@
+@@ -1095,6 +1095,426 @@
        "original_sha256": "461f0cd8c82fda303d244bd2e7d866dfa0a3a0e88e4e29eeaa32547988cb1a92",
        "native_symbol": "_ml_io_read8",
        "evidence": "Loads and returns one byte at x0. Directly precedes ml_io_read16, ml_io_read32 and ml_io_read64, which have the same shape for their widths. Source osfmk/arm64/machine_routines.c ml_io_read8; the native development build adds its timing checks around the same read."
@@ -27,6 +27,405 @@ index bcc5ee9..cb424f9 100644
 +      "original_sha256": "39b88939af73a485c4cbee95f92c93bcf1d2e97e27d3cca6704c52a25b76f9a1",
 +      "native_symbol": "_memset",
 +      "evidence": "Byte replicated with 0x0101010101010101, 64-byte blocks after a 16-byte aligned head: osfmk/arm64/bzero.s _memset (alias _secure_memset at the same native address, which leaves the pair ambiguous to the matcher). Imported by corecrypto."
++    },
++    {
++      "original": "0xfffffe000acf4564",
++      "original_size": 20,
++      "original_sha256": "0fa0c69415cbc527943ea4219d6504aa90abbbb71b34c04bf80df11619c5f5e3",
++      "native_symbol": "_absolutetime_to_continuoustime",
++      "evidence": "Normalized code (4 instructions; BTI pads and upstream clang's PAC failure checks removed, PC-relative immediates masked) is unique among the original functions and equals exactly one native function, itself unique. Proposed by UniXNU-penang scripts/pair-normalized.py for a prelink stub."
++    },
++    {
++      "original": "0xfffffe000aec68fc",
++      "original_size": 24,
++      "original_sha256": "a7543740c94166bc88ccc6b6b61f1227187394dafff33f27760b62b4a173b1f2",
++      "native_symbol": "_ml_get_interrupts_enabled",
++      "evidence": "Normalized code (5 instructions; BTI pads and upstream clang's PAC failure checks removed, PC-relative immediates masked) is unique among the original functions and equals exactly one native function, itself unique. Proposed by UniXNU-penang scripts/pair-normalized.py for a prelink stub."
++    },
++    {
++      "original": "0xfffffe000aec7e44",
++      "original_size": 20,
++      "original_sha256": "529b9e040f0dcc6ae1cca2ce9644a937361fc7ed42f50606ed8d79bad1f17584",
++      "native_symbol": "_ml_get_boot_cpu_number",
++      "evidence": "Normalized code (4 instructions; BTI pads and upstream clang's PAC failure checks removed, PC-relative immediates masked) is unique among the original functions and equals exactly one native function, itself unique. Proposed by UniXNU-penang scripts/pair-normalized.py for a prelink stub."
++    },
++    {
++      "original": "0xfffffe000aecf474",
++      "original_size": 64,
++      "original_sha256": "3deef3394fd57f999083f3f699ad0a1d9728e75ea2feaf2242196d630b9a83ad",
++      "native_symbol": "_absolutetime_to_nanoseconds",
++      "evidence": "Normalized code (15 instructions; BTI pads and upstream clang's PAC failure checks removed, PC-relative immediates masked) is unique among the original functions and equals exactly one native function, itself unique. Proposed by UniXNU-penang scripts/pair-normalized.py for a prelink stub."
++    },
++    {
++      "original": "0xfffffe000aecf4b4",
++      "original_size": 92,
++      "original_sha256": "0b75bc41afb8f6c300778ad2b8820599c49936b723bec3baaf8baaac3b8be5f9",
++      "native_symbol": "_nanoseconds_to_absolutetime",
++      "evidence": "Normalized code (22 instructions; BTI pads and upstream clang's PAC failure checks removed, PC-relative immediates masked) is unique among the original functions and equals exactly one native function, itself unique. Proposed by UniXNU-penang scripts/pair-normalized.py for a prelink stub."
++    },
++    {
++      "original": "0xfffffe000aecf510",
++      "original_size": 100,
++      "original_sha256": "4c6fa5e385038eb1813b0debd128faea4d56faa78d4091ec35e606df1a767087",
++      "native_symbol": "_clock_interval_to_absolutetime_interval",
++      "evidence": "Normalized code (24 instructions; BTI pads and upstream clang's PAC failure checks removed, PC-relative immediates masked) is unique among the original functions and equals exactly one native function, itself unique. Proposed by UniXNU-penang scripts/pair-normalized.py for a prelink stub."
++    },
++    {
++      "original": "0xfffffe000af555f4",
++      "original_size": 44,
++      "original_sha256": "94ed06f53ebdd13c44c9e79b219f105457a7b878bd2a4db30309d5c323443ee9",
++      "native_symbol": "_vfs_name",
++      "evidence": "Normalized code (10 instructions; BTI pads and upstream clang's PAC failure checks removed, PC-relative immediates masked) is unique among the original functions and equals exactly one native function, itself unique. Proposed by UniXNU-penang scripts/pair-normalized.py for a prelink stub."
++    },
++    {
++      "original": "0xfffffe000af55620",
++      "original_size": 28,
++      "original_sha256": "b440438a783bd2e600d90ab1bd6e51f77da976616809d14e931d696a6a525a4e",
++      "native_symbol": "_vfs_typenum",
++      "evidence": "Normalized code (6 instructions; BTI pads and upstream clang's PAC failure checks removed, PC-relative immediates masked) is unique among the original functions and equals exactly one native function, itself unique. Proposed by UniXNU-penang scripts/pair-normalized.py for a prelink stub."
++    },
++    {
++      "original": "0xfffffe000af5768c",
++      "original_size": 56,
++      "original_sha256": "08d6ecd1c9399d88c3af228d4fa884967a62b0248794db9494f92a58ff0c767d",
++      "native_symbol": "_vnode_isonexternalstorage",
++      "evidence": "Normalized code (13 instructions; BTI pads and upstream clang's PAC failure checks removed, PC-relative immediates masked) is unique among the original functions and equals exactly one native function, itself unique. Proposed by UniXNU-penang scripts/pair-normalized.py for a prelink stub."
++    },
++    {
++      "original": "0xfffffe000af57790",
++      "original_size": 28,
++      "original_sha256": "f4906fac8dc725ae850f4c4b220cd808c3b444dc52821983f462fc818fed83cf",
++      "native_symbol": "_vnode_specrdev",
++      "evidence": "Normalized code (6 instructions; BTI pads and upstream clang's PAC failure checks removed, PC-relative immediates masked) is unique among the original functions and equals exactly one native function, itself unique. Proposed by UniXNU-penang scripts/pair-normalized.py for a prelink stub."
++    },
++    {
++      "original": "0xfffffe000af584c4",
++      "original_size": 40,
++      "original_sha256": "fa0b52e253aa732019c017fa070bb94cc1f78651873763bafc3ad8217911f4ac",
++      "native_symbol": "_vnode_parent",
++      "evidence": "Normalized code (9 instructions; BTI pads and upstream clang's PAC failure checks removed, PC-relative immediates masked) is unique among the original functions and equals exactly one native function, itself unique. Proposed by UniXNU-penang scripts/pair-normalized.py for a prelink stub."
++    },
++    {
++      "original": "0xfffffe000af67440",
++      "original_size": 80,
++      "original_sha256": "1401c7d28bd8f3ed5a3727439f6c0110e044f1b2e8e558892c65ab7e69170991",
++      "native_symbol": "_fifo_pathconf",
++      "evidence": "Normalized code (19 instructions; BTI pads and upstream clang's PAC failure checks removed, PC-relative immediates masked) is unique among the original functions and equals exactly one native function, itself unique. Proposed by UniXNU-penang scripts/pair-normalized.py for a prelink stub."
++    },
++    {
++      "original": "0xfffffe000af679d0",
++      "original_size": 24,
++      "original_sha256": "46cde01ad3be418fc252c48e8c7433a513204c0cfd906c9b990b09bdbd0289cd",
++      "native_symbol": "_fifo_close",
++      "evidence": "Normalized code (5 instructions; BTI pads and upstream clang's PAC failure checks removed, PC-relative immediates masked) is unique among the original functions and equals exactly one native function, itself unique. Proposed by UniXNU-penang scripts/pair-normalized.py for a prelink stub."
++    },
++    {
++      "original": "0xfffffe000b2c3444",
++      "original_size": 60,
++      "original_sha256": "e1a17eaa43a48edef55e7b86a3024656f6b5cc86c6f939f7f4161e5e095d3370",
++      "native_symbol": "_ubc_getsize",
++      "evidence": "Normalized code (14 instructions; BTI pads and upstream clang's PAC failure checks removed, PC-relative immediates masked) is unique among the original functions and equals exactly one native function, itself unique. Proposed by UniXNU-penang scripts/pair-normalized.py for a prelink stub."
++    },
++    {
++      "original": "0xfffffe000b2c43f8",
++      "original_size": 80,
++      "original_sha256": "68ab231e274d31e92cb3baeb35d7903b06e0443dc5a9f34923b8b5ec9418c233",
++      "native_symbol": "_ubc_is_mapped",
++      "evidence": "Normalized code (19 instructions; BTI pads and upstream clang's PAC failure checks removed, PC-relative immediates masked) is unique among the original functions and equals exactly one native function, itself unique. Proposed by UniXNU-penang scripts/pair-normalized.py for a prelink stub."
++    },
++    {
++      "original": "0xfffffe000b2c4448",
++      "original_size": 72,
++      "original_sha256": "45eaffa2ceb54cd7c26badacebf712f92c8464280b2ed319938f3b7ae4ae7085",
++      "native_symbol": "_ubc_is_mapped_writable",
++      "evidence": "Normalized code (17 instructions; BTI pads and upstream clang's PAC failure checks removed, PC-relative immediates masked) is unique among the original functions and equals exactly one native function, itself unique. Proposed by UniXNU-penang scripts/pair-normalized.py for a prelink stub."
++    },
++    {
++      "original": "0xfffffe000b2c4490",
++      "original_size": 72,
++      "original_sha256": "b028b5a35bbf3ba4666f750d890fdc363c0a47132f8a3bc7180ee528dc7b2314",
++      "native_symbol": "_ubc_was_mapped_writable",
++      "evidence": "Normalized code (17 instructions; BTI pads and upstream clang's PAC failure checks removed, PC-relative immediates masked) is unique among the original functions and equals exactly one native function, itself unique. Proposed by UniXNU-penang scripts/pair-normalized.py for a prelink stub."
++    },
++    {
++      "original": "0xfffffe000b3d2e7c",
++      "original_size": 100,
++      "original_sha256": "4e6d735e5f2c18daff61dfa0264a8f9df1286f675800b9ecb4be9c13b2a2e8f4",
++      "native_symbol": "__ZN15OSMetaClassBase12safeMetaCastEPKS_PK11OSMetaClass",
++      "evidence": "Normalized code (24 instructions; BTI pads and upstream clang's PAC failure checks removed, PC-relative immediates masked) is unique among the original functions and equals exactly one native function, itself unique. Proposed by UniXNU-penang scripts/pair-normalized.py for a prelink stub."
++    },
++    {
++      "original": "0xfffffe000b3d83e8",
++      "original_size": 180,
++      "original_sha256": "7aaa1d14f251fe5e807ddbc1a140455d4367a32317786f0359f580aefd1203a2",
++      "native_symbol": "__ZN7OSArray11withObjectsEPPK8OSObjectjj",
++      "evidence": "Normalized code (45 instructions; BTI pads and upstream clang's PAC failure checks removed, PC-relative immediates masked) is unique among the original functions and equals exactly one native function, itself unique. Proposed by UniXNU-penang scripts/pair-normalized.py for a prelink stub."
++    },
++    {
++      "original": "0xfffffe000b3d849c",
++      "original_size": 172,
++      "original_sha256": "ef347175a0d3066aafd09b4c1e2e751a912608790d5a367274ee9689c71321bc",
++      "native_symbol": "__ZN7OSArray9withArrayEPKS_j",
++      "evidence": "Normalized code (43 instructions; BTI pads and upstream clang's PAC failure checks removed, PC-relative immediates masked) is unique among the original functions and equals exactly one native function, itself unique. Proposed by UniXNU-penang scripts/pair-normalized.py for a prelink stub."
++    },
++    {
++      "original": "0xfffffe000b3d92c4",
++      "original_size": 36,
++      "original_sha256": "dd5f7600ddf82ea0cdb68653dcc3bf49cac543b953e7d15ef9bf40de44f51236",
++      "native_symbol": "__ZN12OSCollection10setOptionsEjjPv",
++      "evidence": "Normalized code (8 instructions; BTI pads and upstream clang's PAC failure checks removed, PC-relative immediates masked) is unique among the original functions and equals exactly one native function, itself unique. Proposed by UniXNU-penang scripts/pair-normalized.py for a prelink stub."
++    },
++    {
++      "original": "0xfffffe000b3dc320",
++      "original_size": 156,
++      "original_sha256": "365aea2ae7edefe1b67ad426dd504945b9df2c72cc5ea5361c44d1144ac3e0c4",
++      "native_symbol": "__ZN6OSData12withCapacityEj",
++      "evidence": "Normalized code (39 instructions; BTI pads and upstream clang's PAC failure checks removed, PC-relative immediates masked) is unique among the original functions and equals exactly one native function, itself unique. Proposed by UniXNU-penang scripts/pair-normalized.py for a prelink stub."
++    },
++    {
++      "original": "0xfffffe000b3dc514",
++      "original_size": 156,
++      "original_sha256": "a4115ff8ac1b91a59c1606eb7934153a1bb8c7b4ceeffe9b98642a83d6d48fd1",
++      "native_symbol": "__ZN6OSData8withDataEPKS_",
++      "evidence": "Normalized code (39 instructions; BTI pads and upstream clang's PAC failure checks removed, PC-relative immediates masked) is unique among the original functions and equals exactly one native function, itself unique. Proposed by UniXNU-penang scripts/pair-normalized.py for a prelink stub."
++    },
++    {
++      "original": "0xfffffe000b3dc5b0",
++      "original_size": 180,
++      "original_sha256": "ffe9755c46054e62ee9208829a663e83f3eb8db5b57de85043db281492980419",
++      "native_symbol": "__ZN6OSData8withDataEPKS_jj",
++      "evidence": "Normalized code (45 instructions; BTI pads and upstream clang's PAC failure checks removed, PC-relative immediates masked) is unique among the original functions and equals exactly one native function, itself unique. Proposed by UniXNU-penang scripts/pair-normalized.py for a prelink stub."
++    },
++    {
++      "original": "0xfffffe000b3df420",
++      "original_size": 156,
++      "original_sha256": "999be34d7153bb653bfd3ce270da71c9424ea7594898b4b931fd053ba3b2fa5e",
++      "native_symbol": "__ZN12OSDictionary12withCapacityEj",
++      "evidence": "Normalized code (39 instructions; BTI pads and upstream clang's PAC failure checks removed, PC-relative immediates masked) is unique among the original functions and equals exactly one native function, itself unique. Proposed by UniXNU-penang scripts/pair-normalized.py for a prelink stub."
++    },
++    {
++      "original": "0xfffffe000b3df4bc",
++      "original_size": 196,
++      "original_sha256": "08b8dcc94caf8b0edf924a64582a04527746f0d2fafdeb852ff530ad63c10841",
++      "native_symbol": "__ZN12OSDictionary11withObjectsEPPK8OSObjectPPK8OSSymboljj",
++      "evidence": "Normalized code (49 instructions; BTI pads and upstream clang's PAC failure checks removed, PC-relative immediates masked) is unique among the original functions and equals exactly one native function, itself unique. Proposed by UniXNU-penang scripts/pair-normalized.py for a prelink stub."
++    },
++    {
++      "original": "0xfffffe000b3df580",
++      "original_size": 196,
++      "original_sha256": "b57980b2f74fb9cee1022f809e80b3542e546eec760e0e58606448f1181b6618",
++      "native_symbol": "__ZN12OSDictionary11withObjectsEPPK8OSObjectPPK8OSStringjj",
++      "evidence": "Normalized code (49 instructions; BTI pads and upstream clang's PAC failure checks removed, PC-relative immediates masked) is unique among the original functions and equals exactly one native function, itself unique. Proposed by UniXNU-penang scripts/pair-normalized.py for a prelink stub."
++    },
++    {
++      "original": "0xfffffe000b3df644",
++      "original_size": 172,
++      "original_sha256": "80b40a6651258453249cb9555e113502b1600b64022e48b9a3dd3769af114e5b",
++      "native_symbol": "__ZN12OSDictionary14withDictionaryEPKS_j",
++      "evidence": "Normalized code (43 instructions; BTI pads and upstream clang's PAC failure checks removed, PC-relative immediates masked) is unique among the original functions and equals exactly one native function, itself unique. Proposed by UniXNU-penang scripts/pair-normalized.py for a prelink stub."
++    },
++    {
++      "original": "0xfffffe000b4096dc",
++      "original_size": 40,
++      "original_sha256": "f72d28a1f5e0dafaab8c9712baf3d4a69864038701d89774d22dce5403c60903",
++      "native_symbol": "__ZNK8OSNumber11doubleValueEv",
++      "evidence": "Normalized code (9 instructions; BTI pads and upstream clang's PAC failure checks removed, PC-relative immediates masked) is unique among the original functions and equals exactly one native function, itself unique. Proposed by UniXNU-penang scripts/pair-normalized.py for a prelink stub."
++    },
++    {
++      "original": "0xfffffe000b40ad84",
++      "original_size": 180,
++      "original_sha256": "92656e937864dbf7bc235f636bcf40a0a1a0c50ec8471dc3d8bc212da9529b54",
++      "native_symbol": "__ZN12OSOrderedSet12withCapacityEjPFiPK15OSMetaClassBaseS2_PvES3_",
++      "evidence": "Normalized code (45 instructions; BTI pads and upstream clang's PAC failure checks removed, PC-relative immediates masked) is unique among the original functions and equals exactly one native function, itself unique. Proposed by UniXNU-penang scripts/pair-normalized.py for a prelink stub."
++    },
++    {
++      "original": "0xfffffe000b40d608",
++      "original_size": 156,
++      "original_sha256": "99e4bb6456184d3bd6abfe72e812923d1c387ebc03f59503530598a1901da4a4",
++      "native_symbol": "__ZN11OSSerialize12withCapacityEj",
++      "evidence": "Normalized code (39 instructions; BTI pads and upstream clang's PAC failure checks removed, PC-relative immediates masked) is unique among the original functions and equals exactly one native function, itself unique. Proposed by UniXNU-penang scripts/pair-normalized.py for a prelink stub."
++    },
++    {
++      "original": "0xfffffe000b40d910",
++      "original_size": 176,
++      "original_sha256": "a46bbf2a3c55e57a13144b906d89f2a00dfa440e6d55ae5e47be4350043c67b0",
++      "native_symbol": "__ZN12OSSerializer9forTargetEPvPFbS0_S0_P11OSSerializeES0_",
++      "evidence": "Normalized code (44 instructions; BTI pads and upstream clang's PAC failure checks removed, PC-relative immediates masked) is unique among the original functions and equals exactly one native function, itself unique. Proposed by UniXNU-penang scripts/pair-normalized.py for a prelink stub."
++    },
++    {
++      "original": "0xfffffe000b40f394",
++      "original_size": 156,
++      "original_sha256": "e0d18d8ba0601329ab13ba4cd443b817684e574bda9971b5013e5628ef0e8d31",
++      "native_symbol": "__ZN5OSSet12withCapacityEj",
++      "evidence": "Normalized code (39 instructions; BTI pads and upstream clang's PAC failure checks removed, PC-relative immediates masked) is unique among the original functions and equals exactly one native function, itself unique. Proposed by UniXNU-penang scripts/pair-normalized.py for a prelink stub."
++    },
++    {
++      "original": "0xfffffe000b40f4e4",
++      "original_size": 172,
++      "original_sha256": "e0e640052acd8d626cbebab4ffae188f988c35978a684a6a05a63929833b69fc",
++      "native_symbol": "__ZN5OSSet9withArrayEPK7OSArrayj",
++      "evidence": "Normalized code (43 instructions; BTI pads and upstream clang's PAC failure checks removed, PC-relative immediates masked) is unique among the original functions and equals exactly one native function, itself unique. Proposed by UniXNU-penang scripts/pair-normalized.py for a prelink stub."
++    },
++    {
++      "original": "0xfffffe000b40f590",
++      "original_size": 172,
++      "original_sha256": "83d6ab26876bd11c1b75feb944af5e9a8e0fb5edb1cddd08f5130745c63aef43",
++      "native_symbol": "__ZN5OSSet7withSetEPKS_j",
++      "evidence": "Normalized code (43 instructions; BTI pads and upstream clang's PAC failure checks removed, PC-relative immediates masked) is unique among the original functions and equals exactly one native function, itself unique. Proposed by UniXNU-penang scripts/pair-normalized.py for a prelink stub."
++    },
++    {
++      "original": "0xfffffe000b4108c0",
++      "original_size": 156,
++      "original_sha256": "7d23609d958b46f3a6aedd94b890df0494f9357772027e07fe4880c6bdfe1133",
++      "native_symbol": "__ZN8OSString10withStringEPKS_",
++      "evidence": "Normalized code (39 instructions; BTI pads and upstream clang's PAC failure checks removed, PC-relative immediates masked) is unique among the original functions and equals exactly one native function, itself unique. Proposed by UniXNU-penang scripts/pair-normalized.py for a prelink stub."
++    },
++    {
++      "original": "0xfffffe000b4109f8",
++      "original_size": 156,
++      "original_sha256": "84b0ad56640264d02d0e4089a64db0bf2ff337520d9f17a4fd3e03f44a18f1b7",
++      "native_symbol": "__ZN8OSString17withCStringNoCopyEPKc",
++      "evidence": "Normalized code (39 instructions; BTI pads and upstream clang's PAC failure checks removed, PC-relative immediates masked) is unique among the original functions and equals exactly one native function, itself unique. Proposed by UniXNU-penang scripts/pair-normalized.py for a prelink stub."
++    },
++    {
++      "original": "0xfffffe000b49e970",
++      "original_size": 196,
++      "original_sha256": "c1882aa098f21a844455b0259388622da1085da25e2114ccd1d4a4175282487a",
++      "native_symbol": "__ZN22IOInterruptEventSource20interruptEventSourceEP8OSObjectPFvS1_PS_iEP9IOServicei",
++      "evidence": "Normalized code (49 instructions; BTI pads and upstream clang's PAC failure checks removed, PC-relative immediates masked) is unique among the original functions and equals exactly one native function, itself unique. Proposed by UniXNU-penang scripts/pair-normalized.py for a prelink stub."
++    },
++    {
++      "original": "0xfffffe000b49fe20",
++      "original_size": 172,
++      "original_sha256": "1c2645e9a327d638e25d51f38290104db415d20c0b30d520470c9c88d3e2f48c",
++      "native_symbol": "__ZN13IOCommandGate11commandGateEP8OSObjectPFiS1_PvS2_S2_S2_E",
++      "evidence": "Normalized code (43 instructions; BTI pads and upstream clang's PAC failure checks removed, PC-relative immediates masked) is unique among the original functions and equals exactly one native function, itself unique. Proposed by UniXNU-penang scripts/pair-normalized.py for a prelink stub."
++    },
++    {
++      "original": "0xfffffe000b4a154c",
++      "original_size": 156,
++      "original_sha256": "3455a61667e4b92e8374ef1b02d25c833e817eee90a17e11e792cd6cd1387ddb",
++      "native_symbol": "__ZN13IOCommandPool12withWorkLoopEP10IOWorkLoop",
++      "evidence": "Normalized code (39 instructions; BTI pads and upstream clang's PAC failure checks removed, PC-relative immediates masked) is unique among the original functions and equals exactly one native function, itself unique. Proposed by UniXNU-penang scripts/pair-normalized.py for a prelink stub."
++    },
++    {
++      "original": "0xfffffe000b4a51f4",
++      "original_size": 84,
++      "original_sha256": "7b340857097a05161947e415e6b166eb757a41c73c947336d334e2d3d13a0010",
++      "native_symbol": "__ZN24IOBufferMemoryDescriptor14getBytesNoCopyEmm",
++      "evidence": "Normalized code (20 instructions; BTI pads and upstream clang's PAC failure checks removed, PC-relative immediates masked) is unique among the original functions and equals exactly one native function, itself unique. Proposed by UniXNU-penang scripts/pair-normalized.py for a prelink stub."
++    },
++    {
++      "original": "0xfffffe000b4a5248",
++      "original_size": 56,
++      "original_sha256": "25b53306c2cd45642930aea808a810c8251eb640f849f6d86bf5a2c2b6583a09",
++      "native_symbol": "__ZN24IOBufferMemoryDescriptor14getBytesNoCopyEv",
++      "evidence": "Normalized code (13 instructions; BTI pads and upstream clang's PAC failure checks removed, PC-relative immediates masked) is unique among the original functions and equals exactly one native function, itself unique. Proposed by UniXNU-penang scripts/pair-normalized.py for a prelink stub."
++    },
++    {
++      "original": "0xfffffe000b4a711c",
++      "original_size": 28,
++      "original_sha256": "09c44f8293d081cf1aae7e21e2fb50bf35fc89d73b5453a9d724d5a7319cff6b",
++      "native_symbol": "__ZN12IODMACommand14OutputLittle32EPS_NS_9Segment64EPvj",
++      "evidence": "Normalized code (6 instructions; BTI pads and upstream clang's PAC failure checks removed, PC-relative immediates masked) is unique among the original functions and equals exactly one native function, itself unique. Proposed by UniXNU-penang scripts/pair-normalized.py for a prelink stub."
++    },
++    {
++      "original": "0xfffffe000b4a7268",
++      "original_size": 60,
++      "original_sha256": "80616d1e48d3a968de3c02572f153fb02e885f36d9bacf4a55085e68243b1c03",
++      "native_symbol": "__ZN12IODMACommand26getPreparedOffsetAndLengthEPyS0_",
++      "evidence": "Normalized code (14 instructions; BTI pads and upstream clang's PAC failure checks removed, PC-relative immediates masked) is unique among the original functions and equals exactly one native function, itself unique. Proposed by UniXNU-penang scripts/pair-normalized.py for a prelink stub."
++    },
++    {
++      "original": "0xfffffe000b4a9210",
++      "original_size": 272,
++      "original_sha256": "3dc5ae5b0e41805fb67219f77bd0a071bdd22b3aeaef1f8ffdc996f567583dd8",
++      "native_symbol": "__ZN12IODMACommand12cloneCommandEPv",
++      "evidence": "Normalized code (68 instructions; BTI pads and upstream clang's PAC failure checks removed, PC-relative immediates masked) is unique among the original functions and equals exactly one native function, itself unique. Proposed by UniXNU-penang scripts/pair-normalized.py for a prelink stub."
++    },
++    {
++      "original": "0xfffffe000b4aa040",
++      "original_size": 244,
++      "original_sha256": "6e21821206bc6084380c2d3c21ed5cb005bdd0921df905b49ab1367c188b02f2",
++      "native_symbol": "__ZN12IODMACommand17withSpecificationEPFbPS_NS_9Segment64EPvjEhyNS_14MappingOptionsEyjP8IOMapperS2_",
++      "evidence": "Normalized code (61 instructions; BTI pads and upstream clang's PAC failure checks removed, PC-relative immediates masked) is unique among the original functions and equals exactly one native function, itself unique. Proposed by UniXNU-penang scripts/pair-normalized.py for a prelink stub."
++    },
++    {
++      "original": "0xfffffe000b4bb074",
++      "original_size": 208,
++      "original_sha256": "7a3f223c1b59a1577944c89898b5e5cee677a55bdbcced67abc9769360ddc504",
++      "native_symbol": "__ZN18IOMemoryDescriptor16withAddressRangeEyyjP4task",
++      "evidence": "Normalized code (52 instructions; BTI pads and upstream clang's PAC failure checks removed, PC-relative immediates masked) is unique among the original functions and equals exactly one native function, itself unique. Proposed by UniXNU-penang scripts/pair-normalized.py for a prelink stub."
++    },
++    {
++      "original": "0xfffffe000b4bb144",
++      "original_size": 188,
++      "original_sha256": "a06db3bb0e5d23f7d6cbb8a9255d57d560efcb2198e76b00d3415aa634f81c58",
++      "native_symbol": "__ZN18IOMemoryDescriptor19withPhysicalAddressEyyj",
++      "evidence": "Normalized code (47 instructions; BTI pads and upstream clang's PAC failure checks removed, PC-relative immediates masked) is unique among the original functions and equals exactly one native function, itself unique. Proposed by UniXNU-penang scripts/pair-normalized.py for a prelink stub."
++    },
++    {
++      "original": "0xfffffe000b4bb200",
++      "original_size": 212,
++      "original_sha256": "036d843da5f3de0a34725dfab8497f33dfef84bf80ad67951fd3850b80bed259",
++      "native_symbol": "__ZN18IOMemoryDescriptor17withAddressRangesEP14IOVirtualRangejjP4task",
++      "evidence": "Normalized code (53 instructions; BTI pads and upstream clang's PAC failure checks removed, PC-relative immediates masked) is unique among the original functions and equals exactly one native function, itself unique. Proposed by UniXNU-penang scripts/pair-normalized.py for a prelink stub."
++    },
++    {
++      "original": "0xfffffe000b4bb3c4",
++      "original_size": 220,
++      "original_sha256": "620e755d1e73665ce5115f8d9ed7726ca377f970488377485ec2e0936f767178",
++      "native_symbol": "__ZN18IOMemoryDescriptor11withOptionsEPvjjP4taskjP8IOMapper",
++      "evidence": "Normalized code (55 instructions; BTI pads and upstream clang's PAC failure checks removed, PC-relative immediates masked) is unique among the original functions and equals exactly one native function, itself unique. Proposed by UniXNU-penang scripts/pair-normalized.py for a prelink stub."
++    },
++    {
++      "original": "0xfffffe000b4c1544",
++      "original_size": 20,
++      "original_sha256": "028cb22d9509b36c2fc98a19de77fe072182f7cd09c68f645bb3db8a01289dec",
++      "native_symbol": "__ZN16IOPlatformExpert16hasPrivPMFeatureEm",
++      "evidence": "Normalized code (4 instructions; BTI pads and upstream clang's PAC failure checks removed, PC-relative immediates masked) is unique among the original functions and equals exactly one native function, itself unique. Proposed by UniXNU-penang scripts/pair-normalized.py for a prelink stub."
++    },
++    {
++      "original": "0xfffffe000b4c1558",
++      "original_size": 20,
++      "original_sha256": "0d5feac54bf06601e61ac924310881efd76a8a7650dce873ce2ddcfee2afbe9b",
++      "native_symbol": "__ZN16IOPlatformExpert12hasPMFeatureEm",
++      "evidence": "Normalized code (4 instructions; BTI pads and upstream clang's PAC failure checks removed, PC-relative immediates masked) is unique among the original functions and equals exactly one native function, itself unique. Proposed by UniXNU-penang scripts/pair-normalized.py for a prelink stub."
++    },
++    {
++      "original": "0xfffffe000b4c86d0",
++      "original_size": 20,
++      "original_sha256": "a55a94ac5781e99091cb42cb47dc0ce911d01b12891240d823de08232a1d5141",
++      "native_symbol": "__ZN5IOCPU11setCPUStateEj",
++      "evidence": "Normalized code (4 instructions; BTI pads and upstream clang's PAC failure checks removed, PC-relative immediates masked) is unique among the original functions and equals exactly one native function, itself unique. Proposed by UniXNU-penang scripts/pair-normalized.py for a prelink stub."
++    },
++    {
++      "original": "0xfffffe000b4f3738",
++      "original_size": 56,
++      "original_sha256": "4e02b631e54f600f37621816f129cdbb03de45fe61e1f84d0819156dd6310358",
++      "native_symbol": "__ZN17IOSharedDataQueue19getMemoryDescriptorEv",
++      "evidence": "Normalized code (13 instructions; BTI pads and upstream clang's PAC failure checks removed, PC-relative immediates masked) is unique among the original functions and equals exactly one native function, itself unique. Proposed by UniXNU-penang scripts/pair-normalized.py for a prelink stub."
++    },
++    {
++      "original": "0xfffffe000b4f9dcc",
++      "original_size": 180,
++      "original_sha256": "bdc60fccc1bbaed1f176539800bd3d9182278a06506bca05ded6fd20c736c368",
++      "native_symbol": "__ZN16IOSimpleReporter4withEP9IOServicety",
++      "evidence": "Normalized code (45 instructions; BTI pads and upstream clang's PAC failure checks removed, PC-relative immediates masked) is unique among the original functions and equals exactly one native function, itself unique. Proposed by UniXNU-penang scripts/pair-normalized.py for a prelink stub."
++    },
++    {
++      "original": "0xfffffe000b4fd7d0",
++      "original_size": 284,
++      "original_sha256": "8749d78bde0d26b4fa32caeac9e8a4e2459cb61912bcd6a676957c67a6d3457e",
++      "native_symbol": "__ZN19IOHistogramReporter4withEP9IOServicetyPKcyiP24IOHistogramSegmentConfig",
++      "evidence": "Normalized code (71 instructions; BTI pads and upstream clang's PAC failure checks removed, PC-relative immediates masked) is unique among the original functions and equals exactly one native function, itself unique. Proposed by UniXNU-penang scripts/pair-normalized.py for a prelink stub."
++    },
++    {
++      "original": "0xfffffe000b5be100",
++      "original_size": 28,
++      "original_sha256": "f6a953e199655f542547cf030ca97621e4b2ac584c359d5382a49cd97bb5dcc2",
++      "native_symbol": "_SecureDTGetProperty",
++      "evidence": "Normalized code (6 instructions; BTI pads and upstream clang's PAC failure checks removed, PC-relative immediates masked) is unique among the original functions and equals exactly one native function, itself unique. Proposed by UniXNU-penang scripts/pair-normalized.py for a prelink stub."
      }
    ],
    "data": [
