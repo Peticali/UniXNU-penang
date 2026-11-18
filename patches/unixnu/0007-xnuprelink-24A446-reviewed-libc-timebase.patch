@@ -1,5 +1,5 @@
 diff --git a/fixtures/fileset-24A446-symbols.json b/fixtures/fileset-24A446-symbols.json
-index bcc5ee9..bae6e1a 100644
+index bcc5ee9..9c11f1a 100644
 --- a/fixtures/fileset-24A446-symbols.json
 +++ b/fixtures/fileset-24A446-symbols.json
 @@ -1095,6 +1095,1021 @@
@@ -1020,7 +1020,7 @@ index bcc5ee9..bae6e1a 100644
 +      "original_size": 44,
 +      "original_sha256": "e064deac31b0475382e8124a1a8f35cbcb924e070ab43505cd597dda6e01f4db",
 +      "native_symbol": "_IOSetCoreAnalyticsSendEventProc",
-+      "evidence": "Stores the given callback in a global and returns 0, or returns kIOReturnExclusiveAccess (0xe00002e2) when one is set already. Source: iokit/Kernel/IOService.cpp IOSetCoreAnalyticsSendEventProc (gIOCoreAnalyticsSendEventProc). Imported by CoreAnalyticsFamily's start, which registers its send-event function (panic on the device)."
++      "evidence": "Stores the given callback in a global and returns 0, or returns kIOReturnNotPermitted (0xe00002e2) when one is set already. Source: iokit/Kernel/IOService.cpp IOSetCoreAnalyticsSendEventProc (gIOCoreAnalyticsSendEventProc). Imported by CoreAnalyticsFamily's start, which registers its send-event function (panic on the device)."
      }
    ],
    "data": [
