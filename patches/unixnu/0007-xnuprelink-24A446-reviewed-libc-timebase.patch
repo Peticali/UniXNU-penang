@@ -1,8 +1,8 @@
 diff --git a/fixtures/fileset-24A446-symbols.json b/fixtures/fileset-24A446-symbols.json
-index bcc5ee9..13fff64 100644
+index bcc5ee9..de240b5 100644
 --- a/fixtures/fileset-24A446-symbols.json
 +++ b/fixtures/fileset-24A446-symbols.json
-@@ -1095,6 +1095,1070 @@
+@@ -1095,6 +1095,1238 @@
        "original_sha256": "461f0cd8c82fda303d244bd2e7d866dfa0a3a0e88e4e29eeaa32547988cb1a92",
        "native_symbol": "_ml_io_read8",
        "evidence": "Loads and returns one byte at x0. Directly precedes ml_io_read16, ml_io_read32 and ml_io_read64, which have the same shape for their widths. Source osfmk/arm64/machine_routines.c ml_io_read8; the native development build adds its timing checks around the same read."
@@ -1070,10 +1070,178 @@ index bcc5ee9..13fff64 100644
 +      "original_sha256": "1dfd67f8e29ec6d96875212e53127bb8d1c223bf7345312a41fe1dd9449a13cf",
 +      "native_symbol": "__ZN24IOBufferMemoryDescriptor12withCapacityEmjb",
 +      "evidence": "Static factory (capacity, direction, contiguous): allocates through the metaclass, sets kIOMemoryPhysicallyContiguous (0x10) and alignment = capacity when contiguous, else alignment 1, then initializes; immediately precedes withBytes (paired). Source: iokit/Kernel/IOBufferMemoryDescriptor.cpp."
++    },
++    {
++      "original": "0xfffffe000ad6df18",
++      "original_size": 748,
++      "original_sha256": "fb1aedc1e1715f9e03a8e5e332402c215e0aecf83d08eb275083433b066c91eb",
++      "native_symbol": "_sched_enable_acc_rail",
++      "evidence": "Compile order: between paired neighbours _sched_perfcontrol_check_oncore_thread_preemption and _suspend_cluster_powerdown the original and the native kernel hold the same number (2) of unpaired functions; this is position 1. Sizes agree within 4x and all 0 of its references the prelink map already pairs appear in the native function. Proposed by UniXNU-penang scripts/pair-gaps.py."
++    },
++    {
++      "original": "0xfffffe000ad6e204",
++      "original_size": 860,
++      "original_sha256": "7bda8e0b4f6cdc0985487571d01f178f6adebbc67f9bb2d24c3d951fa640b660",
++      "native_symbol": "_sched_disable_acc_rail",
++      "evidence": "Compile order: between paired neighbours _sched_perfcontrol_check_oncore_thread_preemption and _suspend_cluster_powerdown the original and the native kernel hold the same number (2) of unpaired functions; this is position 2. Sizes agree within 4x and all 0 of its references the prelink map already pairs appear in the native function. Proposed by UniXNU-penang scripts/pair-gaps.py."
++    },
++    {
++      "original": "0xfffffe000adb6ff0",
++      "original_size": 88,
++      "original_sha256": "cd1034b77423a0a5683ef857ab7a7f5f2dd64ba498a8fc32ca206fa56f1958e1",
++      "native_symbol": "_zfree",
++      "evidence": "Compile order: between paired neighbours _zfree_nozero_n and _zfree_percpu the original and the native kernel hold the same number (1) of unpaired functions; this is position 1. Sizes agree within 4x and all 2 of its references the prelink map already pairs appear in the native function. Proposed by UniXNU-penang scripts/pair-gaps.py."
++    },
++    {
++      "original": "0xfffffe000aef44d0",
++      "original_size": 72,
++      "original_sha256": "672d0c941eb4fa50f415f1b3c3d5a27553c031a40ab3c02037a1fb1e1a79de3c",
++      "native_symbol": "_memchr",
++      "evidence": "Compile order: between paired neighbours _strsep and _url_decode the original and the native kernel hold the same number (1) of unpaired functions; this is position 1. Sizes agree within 4x and all 0 of its references the prelink map already pairs appear in the native function. Proposed by UniXNU-penang scripts/pair-gaps.py."
++    },
++    {
++      "original": "0xfffffe000af212d0",
++      "original_size": 88,
++      "original_sha256": "7bf1c2ece51b541c817b49d01b8a32f2ef6372f15930a0068161eba03823e255",
++      "native_symbol": "_vnode_hasdirtyblks",
++      "evidence": "Compile order: between paired neighbours _vnode_writedone and _vnode_hascleanblks the original and the native kernel hold the same number (1) of unpaired functions; this is position 1. Sizes agree within 4x and all 0 of its references the prelink map already pairs appear in the native function. Proposed by UniXNU-penang scripts/pair-gaps.py."
++    },
++    {
++      "original": "0xfffffe000af53224",
++      "original_size": 68,
++      "original_sha256": "de371781b2bacce03f801c680369e666a1da09bac25b2eca609125e9e9ca095a",
++      "native_symbol": "_vnode_setasnamedstream",
++      "evidence": "Compile order: between paired neighbours _xattr_protected and _vnode_setasnamedstream_internal the original and the native kernel hold the same number (1) of unpaired functions; this is position 1. Sizes agree within 4x and all 1 of its references the prelink map already pairs appear in the native function. Proposed by UniXNU-penang scripts/pair-gaps.py."
++    },
++    {
++      "original": "0xfffffe000af571d4",
++      "original_size": 112,
++      "original_sha256": "26b96fa5b5b557ab91ef2ff7601c13401db119a91bb1aa934ee0bc3ffa6c4521",
++      "native_symbol": "_vfs_context_create",
++      "evidence": "Compile order: between paired neighbours _vfs_context_cwd and _vfs_context_create_with_proc the original and the native kernel hold the same number (1) of unpaired functions; this is position 1. Sizes agree within 4x and all 0 of its references the prelink map already pairs appear in the native function. Proposed by UniXNU-penang scripts/pair-gaps.py."
++    },
++    {
++      "original": "0xfffffe000b224480",
++      "original_size": 64,
++      "original_sha256": "3a9212cb88df17d5de99e9fceaa19a7ac9425ee62c5920d5edb996f48e7cc736",
++      "native_symbol": "_kauth_cred_ismember_gid",
++      "evidence": "Compile order: between paired neighbours _kauth_cred_guid2ntsid and _kauth_cred_ismember_guid the original and the native kernel hold the same number (1) of unpaired functions; this is position 1. Sizes agree within 4x and all 0 of its references the prelink map already pairs appear in the native function. Proposed by UniXNU-penang scripts/pair-gaps.py."
++    },
++    {
++      "original": "0xfffffe000b2261e0",
++      "original_size": 132,
++      "original_sha256": "3039666274f3da4c9db952e762858830796d2975cddf22f1ef7fc12948e53560",
++      "native_symbol": "_kauth_proc_label_update",
++      "evidence": "Compile order: between paired neighbours ___kauth_cred_label_update_block_invoke and ___kauth_proc_label_update_block_invoke the original and the native kernel hold the same number (1) of unpaired functions; this is position 1. Sizes agree within 4x and all 1 of its references the prelink map already pairs appear in the native function. Proposed by UniXNU-penang scripts/pair-gaps.py."
++    },
++    {
++      "original": "0xfffffe000b22b53c",
++      "original_size": 68,
++      "original_sha256": "a3da2d5d99d9ad804d9107ad5eea2fa5d3afdfd258b0eb48f526e792b9344122",
++      "native_symbol": "_fg_get_vnode",
++      "evidence": "Compile order: between paired neighbours _dupfdopen and _fp_get_pipe_id the original and the native kernel hold the same number (2) of unpaired functions; this is position 1. Sizes agree within 4x and all 0 of its references the prelink map already pairs appear in the native function. Proposed by UniXNU-penang scripts/pair-gaps.py."
++    },
++    {
++      "original": "0xfffffe000b2638e4",
++      "original_size": 56,
++      "original_sha256": "6900c1420d89c7645dccf23a244b5e28d08d68d97c586be61e629493c50cd9ee",
++      "native_symbol": "_proc_isinitproc",
++      "evidence": "Compile order: between paired neighbours _proc_is64bit_data and _proc_setpidversion the original and the native kernel hold the same number (1) of unpaired functions; this is position 1. Sizes agree within 4x and all 0 of its references the prelink map already pairs appear in the native function. Proposed by UniXNU-penang scripts/pair-gaps.py."
++    },
++    {
++      "original": "0xfffffe000b3d2578",
++      "original_size": 96,
++      "original_sha256": "282d9e7d424e8748ba2d0c5ec5431efd2f7a5f01988b4631983b035632602b92",
++      "native_symbol": "_OSTestAndSet",
++      "evidence": "Compile order: between paired neighbours _OSBitXorAtomic and _OSIncrementAtomic8 the original and the native kernel hold the same number (2) of unpaired functions; this is position 1. Sizes agree within 4x and all 0 of its references the prelink map already pairs appear in the native function. Proposed by UniXNU-penang scripts/pair-gaps.py."
++    },
++    {
++      "original": "0xfffffe000b3d25d8",
++      "original_size": 100,
++      "original_sha256": "d1205be21f738d46b8c48262d1705eba0a111861fb42c4c294d90cfb2fccef85",
++      "native_symbol": "_OSTestAndClear",
++      "evidence": "Compile order: between paired neighbours _OSBitXorAtomic and _OSIncrementAtomic8 the original and the native kernel hold the same number (2) of unpaired functions; this is position 2. Sizes agree within 4x and all 0 of its references the prelink map already pairs appear in the native function. Proposed by UniXNU-penang scripts/pair-gaps.py."
++    },
++    {
++      "original": "0xfffffe000b44742c",
++      "original_size": 140,
++      "original_sha256": "23a51f2703ff5087f11ad4f3f2dc88c626c9ca3cbee0e00e2c754d1b1192b2f2",
++      "native_symbol": "__Z20IODTMatchNubWithKeysP15IORegistryEntryPKc",
++      "evidence": "Compile order: between paired neighbours __Z18IODTCompareNubNamePK15IORegistryEntryP8OSStringR11OSSharedPtrIS2_E and __Z23IODTFindMatchingEntriesP15IORegistryEntryjPKc the original and the native kernel hold the same number (1) of unpaired functions; this is position 1. Sizes agree within 4x and all 1 of its references the prelink map already pairs appear in the native function. Proposed by UniXNU-penang scripts/pair-gaps.py."
++    },
++    {
++      "original": "0xfffffe000b451e68",
++      "original_size": 192,
++      "original_sha256": "120da452f81eb5de6d918c9ab7f4697dd91d2699448e47f97b2a0dd7aba12922",
++      "native_symbol": "__ZN15IORegistryEntry16propertyHasValueEPKcPK8OSObject",
++      "evidence": "Compile order: between paired neighbours __ZN15IORegistryEntry16propertyHasValueEPK8OSSymbolPK8OSObject and __ZNK15IORegistryEntry16propertyHasValueEPK8OSSymbolPK8OSObjectPK15IORegistryPlanej the original and the native kernel hold the same number (5) of unpaired functions; this is position 2. Sizes agree within 4x and all 0 of its references the prelink map already pairs appear in the native function. Proposed by UniXNU-penang scripts/pair-gaps.py."
++    },
++    {
++      "original": "0xfffffe000b451fa8",
++      "original_size": 64,
++      "original_sha256": "5df665ea742219757deb052bcb8761f1b418c349d9d1d51c8806c9dfaeb1fbe6",
++      "native_symbol": "__ZNK15IORegistryEntry14propertyExistsEPKcPK15IORegistryPlanej",
++      "evidence": "Compile order: between paired neighbours __ZN15IORegistryEntry16propertyHasValueEPK8OSSymbolPK8OSObject and __ZNK15IORegistryEntry16propertyHasValueEPK8OSSymbolPK8OSObjectPK15IORegistryPlanej the original and the native kernel hold the same number (5) of unpaired functions; this is position 5. Sizes agree within 4x and all 0 of its references the prelink map already pairs appear in the native function. Proposed by UniXNU-penang scripts/pair-gaps.py."
++    },
++    {
++      "original": "0xfffffe000b472cd8",
++      "original_size": 260,
++      "original_sha256": "f4b33f4e23ff918049c410846c13c45bf769d12491da69d98ba9076e72ef37f0",
++      "native_symbol": "__ZN9IOService12nameMatchingEPKcP12OSDictionary",
++      "evidence": "Compile order: between paired neighbours __ZN9IOService15serviceMatchingEPKcP12OSDictionary and __ZN9IOService16resourceMatchingEPKcP12OSDictionary the original and the native kernel hold the same number (6) of unpaired functions; this is position 4. Sizes agree within 4x and all 2 of its references the prelink map already pairs appear in the native function. Proposed by UniXNU-penang scripts/pair-gaps.py."
++    },
++    {
++      "original": "0xfffffe000b48d0ec",
++      "original_size": 184,
++      "original_sha256": "86d2d38e34c28b2e3a9b524d949e742e5bbdca95da2ebc123a539d689affc7ae",
++      "native_symbol": "__ZN9IOService10makeUsableEv",
++      "evidence": "Compile order: between paired neighbours __ZN9IOService17requestPowerStateEPK8OSSymbolmj and __ZN9IOService17currentCapabilityEv the original and the native kernel hold the same number (1) of unpaired functions; this is position 1. Sizes agree within 4x and all 1 of its references the prelink map already pairs appear in the native function. Proposed by UniXNU-penang scripts/pair-gaps.py."
++    },
++    {
++      "original": "0xfffffe000b48d1c4",
++      "original_size": 184,
++      "original_sha256": "6d7fbd60a733ad57eca40945730c42675044fa2ab8feeb33ad374053b4158173",
++      "native_symbol": "__ZN9IOService18changePowerStateToEm",
++      "evidence": "Compile order: between paired neighbours __ZN9IOService17currentCapabilityEv and __ZN9IOService30changePowerStateWithOverrideToEmj the original and the native kernel hold the same number (2) of unpaired functions; this is position 1. Sizes agree within 4x and all 1 of its references the prelink map already pairs appear in the native function. Proposed by UniXNU-penang scripts/pair-gaps.py."
++    },
++    {
++      "original": "0xfffffe000b48d27c",
++      "original_size": 184,
++      "original_sha256": "786b2b4c11841d1cbbf5f3ac0f589adce84c963a91564673ce188c3a884fc49c",
++      "native_symbol": "__ZN9IOService22changePowerStateToPrivEm",
++      "evidence": "Compile order: between paired neighbours __ZN9IOService17currentCapabilityEv and __ZN9IOService30changePowerStateWithOverrideToEmj the original and the native kernel hold the same number (2) of unpaired functions; this is position 2. Sizes agree within 4x and all 1 of its references the prelink map already pairs appear in the native function. Proposed by UniXNU-penang scripts/pair-gaps.py."
++    },
++    {
++      "original": "0xfffffe000b4e690c",
++      "original_size": 68,
++      "original_sha256": "406433c4e7e240a19c77a6f5b3ac6d9ea45a9f2bba00ab66caee6b7781f0e3c4",
++      "native_symbol": "__ZN12IOUserClient19setAsyncReference64EPyP8ipc_portyyP4task",
++      "evidence": "Compile order: between paired neighbours __ZN12IOUserClient19setAsyncReference64EPyP8ipc_portyy and __ZN12IOUserClient22clientHasAuthorizationEP4taskP9IOService the original and the native kernel hold the same number (1) of unpaired functions; this is position 1. Sizes agree within 4x and all 0 of its references the prelink map already pairs appear in the native function. Proposed by UniXNU-penang scripts/pair-gaps.py."
++    },
++    {
++      "original": "0xfffffe000b4f4898",
++      "original_size": 164,
++      "original_sha256": "000d5b5b9d1d8fd9684bde7a9480e7d9ed0c0f2e64f49f4d132cc722f32e7ca9",
++      "native_symbol": "_IOCircularDataQueueDestroy",
++      "evidence": "Compile order: between paired neighbours _IOCircularDataQueueCreateWithEntries and _IOCircularDataQueueCopyMemoryDescriptor the original and the native kernel hold the same number (1) of unpaired functions; this is position 1. Sizes agree within 4x and all 0 of its references the prelink map already pairs appear in the native function. Proposed by UniXNU-penang scripts/pair-gaps.py."
++    },
++    {
++      "original": "0xfffffe000b4f8404",
++      "original_size": 592,
++      "original_sha256": "ba96fcf8a4d6b7aeacd935db31eaf8158a75e961b416e8cfbc06226f22fe728e",
++      "native_symbol": "__ZN10IOReporter19configureAllReportsEP5OSSetP19IOReportChannelListjPvS4_",
++      "evidence": "Compile order: between paired neighbours __ZN10IOReporterC2Ev and __ZN10IOReporter15configureReportEP19IOReportChannelListjPvS2_ the original and the native kernel hold the same number (1) of unpaired functions; this is position 1. Sizes agree within 4x and all 0 of its references the prelink map already pairs appear in the native function. Proposed by UniXNU-penang scripts/pair-gaps.py."
++    },
++    {
++      "original": "0xfffffe000b55a530",
++      "original_size": 44,
++      "original_sha256": "f8c08050bf20ab13dacd593298de097ef091f55c589810c9178915856f85c5dd",
++      "native_symbol": "_PE_enter_debugger",
++      "evidence": "Compile order: between paired neighbours _pe_init_debug and _PE_i_can_has_kernel_configuration the original and the native kernel hold the same number (1) of unpaired functions; this is position 1. Sizes agree within 4x and all 0 of its references the prelink map already pairs appear in the native function. Proposed by UniXNU-penang scripts/pair-gaps.py."
      }
    ],
    "data": [
-@@ -1271,6 +2335,24 @@
+@@ -1271,6 +2503,24 @@
        "native_symbol": "_gPESerialBaud",
        "addend": 0,
        "evidence": "32-bit global holding -1 in the original image. IOSerialFamily reads it when it sets a new tty up, takes 9600 when it is -1 and stores the result in t_ispeed and t_ospeed. Source pexpert/gen/pe_gen.c int32_t gPESerialBaud = -1, exported in config/Unsupported.exports; the kernel itself has no reader in the original image."
