@@ -1,5 +1,5 @@
 diff --git a/fixtures/fileset-24A446-symbols.json b/fixtures/fileset-24A446-symbols.json
-index bcc5ee9..542cf0a 100644
+index bcc5ee9..b27c209 100644
 --- a/fixtures/fileset-24A446-symbols.json
 +++ b/fixtures/fileset-24A446-symbols.json
 @@ -1095,6 +1095,496 @@
@@ -499,3 +499,28 @@ index bcc5ee9..542cf0a 100644
      }
    ],
    "data": [
+@@ -1271,6 +1761,24 @@
+       "native_symbol": "_gPESerialBaud",
+       "addend": 0,
+       "evidence": "32-bit global holding -1 in the original image. IOSerialFamily reads it when it sets a new tty up, takes 9600 when it is -1 and stores the result in t_ispeed and t_ospeed. Source pexpert/gen/pe_gen.c int32_t gPESerialBaud = -1, exported in config/Unsupported.exports; the kernel itself has no reader in the original image."
++    },
++    {
++      "original": "0xfffffe0007f06ef0",
++      "native_symbol": "__ZTV9IOService",
++      "addend": 0,
++      "evidence": "Vtable: offset-to-top and RTTI zero, then the IOService entries (OSObject release/retain/serialize, IOService::Dispatch, IOService::free, the IORegistryEntry copyProperty/setProperty family, IOService::init(OSDictionary*) at +0xb8). Kexts built with -fapple-kext call superclass methods through it; left unbound, AppleARMPlatform called the raw chained fixup at +0xb8 (instruction fetch abort on the device). Source: iokit/Kernel/IOService.cpp."
++    },
++    {
++      "original": "0xfffffe000b92ba60",
++      "native_symbol": "__NSConcreteStackBlock",
++      "addend": 0,
++      "evidence": "sandbox builds stack block literals from it: the isa is signed with pacda and the block isa discriminator 0x6ae1 and stored at +0, flags/reserved at +8, invoke at +16. Lies before __NSConcreteGlobalBlock (0xfffffe000b92bb68, already paired). Referenced by sandbox, AMFI, IOGPUFamily, IOHIDFamily, IOSurface and other kexts. Source: libkern/libclosure/runtime.cpp."
++    },
++    {
++      "original": "0xfffffe000b92b2a0",
++      "native_symbol": "__ZN17IONVRAMController10gMetaClassE",
++      "addend": 0,
++      "evidence": "AppleARMPlatform's metaclass constructor for 'AppleARMNORNVRAM' passes it as the superclass metaclass (OSMetaClass(name, super, 0xa0)); AppleARMNORNVRAM is an IONVRAMController. Lies among the IOKit gMetaClass objects (IOBufferMemoryDescriptor before, OSObject after). Source: iokit/Kernel/IONVRAMController.cpp OSDefineMetaClassAndAbstractStructors."
+     }
+   ],
+   "sites": [
