@@ -1,8 +1,8 @@
 diff --git a/fixtures/fileset-24A446-symbols.json b/fixtures/fileset-24A446-symbols.json
-index bcc5ee9..a6b8a62 100644
+index bcc5ee9..041dccf 100644
 --- a/fixtures/fileset-24A446-symbols.json
 +++ b/fixtures/fileset-24A446-symbols.json
-@@ -1095,6 +1095,643 @@
+@@ -1095,6 +1095,1014 @@
        "original_sha256": "461f0cd8c82fda303d244bd2e7d866dfa0a3a0e88e4e29eeaa32547988cb1a92",
        "native_symbol": "_ml_io_read8",
        "evidence": "Loads and returns one byte at x0. Directly precedes ml_io_read16, ml_io_read32 and ml_io_read64, which have the same shape for their widths. Source osfmk/arm64/machine_routines.c ml_io_read8; the native development build adds its timing checks around the same read."
@@ -643,10 +643,381 @@ index bcc5ee9..a6b8a62 100644
 +      "original_sha256": "96710f4a9b50f8fbca0c404417532fcc42c1ab91fba570146ad69b210394948b",
 +      "native_symbol": "__ZN14IOReportLegend17addReporterLegendEP9IOServiceP10IOReporterPKcS5_",
 +      "evidence": "Static form: rejects a null service or reporter with kIOReturnBadArgument (0xe00002bc), reads the service's 'IOReportLegend' property through its vtable, builds the reporter's legend (IOReporter::createLegend) and adds it (IOReportLegend::addLegendEntry, the three-argument member form inlined), then publishes it with 'IOReportLegendPublic'. Source: iokit/Kernel/IOReportLegend.cpp. Imported by CoreAnalyticsFamily's start (panic on the device)."
++    },
++    {
++      "original": "0xfffffe000b3d9240",
++      "original_size": 132,
++      "original_sha256": "37320ae998d9d2c340122f9ae97c18cf8d852018505f046844d0812eb43a5de7",
++      "native_symbol": "__ZN12OSCollection14copyCollectionEP12OSDictionary",
++      "evidence": "Same slot of paired vtables: every slot of these vtables whose original function the prelink map already pairs holds that same native function, so the layouts agree and this slot names the stubbed original. Proposed by UniXNU-penang scripts/pair-vtables.py."
++    },
++    {
++      "original": "0xfffffe000b3d92e8",
++      "original_size": 16,
++      "original_sha256": "45feb7861c3fba4c5da26f545e59294508a6c2b966c8d91b36f954c82fddd2cb",
++      "native_symbol": "__ZN12OSCollection4initEv",
++      "evidence": "Same slot of paired vtables: every slot of these vtables whose original function the prelink map already pairs holds that same native function, so the layouts agree and this slot names the stubbed original. Proposed by UniXNU-penang scripts/pair-vtables.py."
++    },
++    {
++      "original": "0xfffffe000b44db44",
++      "original_size": 296,
++      "original_sha256": "46c33a7a165197fe8ae812a306a0fbad6b3bb6e6978bb0dde05dfce46b347c32",
++      "native_symbol": "__ZNK15IORegistryEntry12copyPropertyEPKc",
++      "evidence": "Same slot of paired vtables: every slot of these vtables whose original function the prelink map already pairs holds that same native function, so the layouts agree and this slot names the stubbed original. Proposed by UniXNU-penang scripts/pair-vtables.py."
++    },
++    {
++      "original": "0xfffffe000b45e094",
++      "original_size": 212,
++      "original_sha256": "ede4f3a1288222abceaf0105789996245cc579be5b4e6e221f0461df37da73c1",
++      "native_symbol": "__ZN9IOService5startEPS_",
++      "evidence": "Same slot of paired vtables: every slot of these vtables whose original function the prelink map already pairs holds that same native function, so the layouts agree and this slot names the stubbed original. Proposed by UniXNU-penang scripts/pair-vtables.py."
++    },
++    {
++      "original": "0xfffffe000b4a39c8",
++      "original_size": 60,
++      "original_sha256": "adbc2b2b05cdca72c77a1726db9935dc7204cd531cac32728a944bff074e3f9a",
++      "native_symbol": "__ZN18IOTimerEventSource4initEjP8OSObjectPFvS1_PS_E",
++      "evidence": "Same slot of paired vtables: every slot of these vtables whose original function the prelink map already pairs holds that same native function, so the layouts agree and this slot names the stubbed original. Proposed by UniXNU-penang scripts/pair-vtables.py."
++    },
++    {
++      "original": "0xfffffe000b4a3b08",
++      "original_size": 132,
++      "original_sha256": "2547d91c0b88140764fd96483baa213f53fbb7034c55df5ea64d4c4001c134f3",
++      "native_symbol": "__ZN18IOTimerEventSource10wakeAtTimeEjj",
++      "evidence": "Same slot of paired vtables: every slot of these vtables whose original function the prelink map already pairs holds that same native function, so the layouts agree and this slot names the stubbed original. Proposed by UniXNU-penang scripts/pair-vtables.py."
++    },
++    {
++      "original": "0xfffffe000b4a3b8c",
++      "original_size": 56,
++      "original_sha256": "e9c04721207033d21e8e5481594fba9a0d74716f0441749d5be5de68ddee73fd",
++      "native_symbol": "__ZN18IOTimerEventSource12wakeAtTimeUSEj",
++      "evidence": "Same slot of paired vtables: every slot of these vtables whose original function the prelink map already pairs holds that same native function, so the layouts agree and this slot names the stubbed original. Proposed by UniXNU-penang scripts/pair-vtables.py."
++    },
++    {
++      "original": "0xfffffe000b4a3bc4",
++      "original_size": 60,
++      "original_sha256": "2dd3deabfccf163fdf5f9b5a2e2db02aa8e5eaa3b16eb03a45f1e2a74ae7c837",
++      "native_symbol": "__ZN18IOTimerEventSource12wakeAtTimeMSEj",
++      "evidence": "Same slot of paired vtables: every slot of these vtables whose original function the prelink map already pairs holds that same native function, so the layouts agree and this slot names the stubbed original. Proposed by UniXNU-penang scripts/pair-vtables.py."
++    },
++    {
++      "original": "0xfffffe000b4a3c00",
++      "original_size": 60,
++      "original_sha256": "43c39d3e226a581aa9beb9b0ac6836c107f75bdb9a3be38cffe3079ea14ec4db",
++      "native_symbol": "__ZN18IOTimerEventSource15wakeAtTimeTicksEj",
++      "evidence": "Same slot of paired vtables: every slot of these vtables whose original function the prelink map already pairs holds that same native function, so the layouts agree and this slot names the stubbed original. Proposed by UniXNU-penang scripts/pair-vtables.py."
++    },
++    {
++      "original": "0xfffffe000b4a3c3c",
++      "original_size": 104,
++      "original_sha256": "27f8e443c77a895b8da807c7bb202a87daaa927da56a13ef024882d6552d0d5b",
++      "native_symbol": "__ZN18IOTimerEventSource10setTimeoutEy",
++      "evidence": "Same slot of paired vtables: every slot of these vtables whose original function the prelink map already pairs holds that same native function, so the layouts agree and this slot names the stubbed original. Proposed by UniXNU-penang scripts/pair-vtables.py."
++    },
++    {
++      "original": "0xfffffe000b4a3ca4",
++      "original_size": 184,
++      "original_sha256": "c0eee3d75ddff82511d100c1fcd32e006795516d0d9e29ac96a881278d5656ef",
++      "native_symbol": "__ZN18IOTimerEventSource10setTimeoutEjj",
++      "evidence": "Same slot of paired vtables: every slot of these vtables whose original function the prelink map already pairs holds that same native function, so the layouts agree and this slot names the stubbed original. Proposed by UniXNU-penang scripts/pair-vtables.py."
++    },
++    {
++      "original": "0xfffffe000b4a3d5c",
++      "original_size": 56,
++      "original_sha256": "2d61501609edb878634ddc8c804e6cf996cfa80427a0330e1673ff14d5df421d",
++      "native_symbol": "__ZN18IOTimerEventSource12setTimeoutUSEj",
++      "evidence": "Same slot of paired vtables: every slot of these vtables whose original function the prelink map already pairs holds that same native function, so the layouts agree and this slot names the stubbed original. Proposed by UniXNU-penang scripts/pair-vtables.py."
++    },
++    {
++      "original": "0xfffffe000b4a3d94",
++      "original_size": 60,
++      "original_sha256": "5d159e6083368dbd52eb99ec4f0c8d141c126b9b41fb1fa3462dcfeaab378e5e",
++      "native_symbol": "__ZN18IOTimerEventSource12setTimeoutMSEj",
++      "evidence": "Same slot of paired vtables: every slot of these vtables whose original function the prelink map already pairs holds that same native function, so the layouts agree and this slot names the stubbed original. Proposed by UniXNU-penang scripts/pair-vtables.py."
++    },
++    {
++      "original": "0xfffffe000b4a3dd0",
++      "original_size": 60,
++      "original_sha256": "f0fced360754b35a5e62bf712bd99cb2f298610d61789d2d80c1cf5c5ea0866d",
++      "native_symbol": "__ZN18IOTimerEventSource15setTimeoutTicksEj",
++      "evidence": "Same slot of paired vtables: every slot of these vtables whose original function the prelink map already pairs holds that same native function, so the layouts agree and this slot names the stubbed original. Proposed by UniXNU-penang scripts/pair-vtables.py."
++    },
++    {
++      "original": "0xfffffe000b4a3e0c",
++      "original_size": 216,
++      "original_sha256": "dcfca3cc601eb2a538124f0c3a23624b68165d8138fa40f017edb3f429daf088",
++      "native_symbol": "__ZN18IOTimerEventSource4initEP8OSObjectPFvS1_PS_E",
++      "evidence": "Same slot of paired vtables: every slot of these vtables whose original function the prelink map already pairs holds that same native function, so the layouts agree and this slot names the stubbed original. Proposed by UniXNU-penang scripts/pair-vtables.py."
++    },
++    {
++      "original": "0xfffffe000b4a42fc",
++      "original_size": 128,
++      "original_sha256": "0274843d80d716fb2adfd25f46ab981d479be84cb37c569f33f4863b1ec26b45",
++      "native_symbol": "__ZN18IOTimerEventSource6enableEv",
++      "evidence": "Same slot of paired vtables: every slot of these vtables whose original function the prelink map already pairs holds that same native function, so the layouts agree and this slot names the stubbed original. Proposed by UniXNU-penang scripts/pair-vtables.py."
++    },
++    {
++      "original": "0xfffffe000b4a4474",
++      "original_size": 120,
++      "original_sha256": "4964713ca8e7a9be9ae12bb5de09ab0fbc8797a6c943d0aeb754dfd8d9964003",
++      "native_symbol": "__ZN18IOTimerEventSource4freeEv",
++      "evidence": "Same slot of paired vtables: every slot of these vtables whose original function the prelink map already pairs holds that same native function, so the layouts agree and this slot names the stubbed original. Proposed by UniXNU-penang scripts/pair-vtables.py."
++    },
++    {
++      "original": "0xfffffe000b4a6d00",
++      "original_size": 200,
++      "original_sha256": "84bb008f4c619e9412d3d8935d711085eede6af3c6800b12d64bf37bca0b1dd5",
++      "native_symbol": "__ZN12IODMACommand16createCopyBufferEjy",
++      "evidence": "Same slot of paired vtables: every slot of these vtables whose original function the prelink map already pairs holds that same native function, so the layouts agree and this slot names the stubbed original. Proposed by UniXNU-penang scripts/pair-vtables.py."
++    },
++    {
++      "original": "0xfffffe000b4a6dc8",
++      "original_size": 172,
++      "original_sha256": "ffba0d82e76859210b06bbf1e7dd7c0e6d28bfe2752a420d7489a475604f5722",
++      "native_symbol": "__ZN12IODMACommand24prepareWithSpecificationEPFbPS_NS_9Segment64EPvjEPKNS_14SegmentOptionsEjP8IOMapperyybb",
++      "evidence": "Same slot of paired vtables: every slot of these vtables whose original function the prelink map already pairs holds that same native function, so the layouts agree and this slot names the stubbed original. Proposed by UniXNU-penang scripts/pair-vtables.py."
++    },
++    {
++      "original": "0xfffffe000b4a7b58",
++      "original_size": 76,
++      "original_sha256": "757803571ebe4f66543efc0ad8ee0693e32feef17c82cadf79e5e330e52af69b",
++      "native_symbol": "__ZN12IODMACommand15genIOVMSegmentsEPyPvPj",
++      "evidence": "Same slot of paired vtables: every slot of these vtables whose original function the prelink map already pairs holds that same native function, so the layouts agree and this slot names the stubbed original. Proposed by UniXNU-penang scripts/pair-vtables.py."
++    },
++    {
++      "original": "0xfffffe000b4a7c54",
++      "original_size": 268,
++      "original_sha256": "e80410c70e460daabaaa10969964a3aaee963c221701bb4e38401138bc52d17d",
++      "native_symbol": "__ZN12IODMACommand11synchronizeEj",
++      "evidence": "Same slot of paired vtables: every slot of these vtables whose original function the prelink map already pairs holds that same native function, so the layouts agree and this slot names the stubbed original. Proposed by UniXNU-penang scripts/pair-vtables.py."
++    },
++    {
++      "original": "0xfffffe000b4a8484",
++      "original_size": 760,
++      "original_sha256": "3d4d060703b6d23e8c7085996f6453429287c821c8224379843a6be7ca7bead3",
++      "native_symbol": "__ZN12IODMACommand8completeEbb",
++      "evidence": "Same slot of paired vtables: every slot of these vtables whose original function the prelink map already pairs holds that same native function, so the layouts agree and this slot names the stubbed original. Proposed by UniXNU-penang scripts/pair-vtables.py."
++    },
++    {
++      "original": "0xfffffe000b4a8e44",
++      "original_size": 12,
++      "original_sha256": "c28f164ae068b258880e18ddfbd48f3baf304b328f2e6a0650b034196b9d7907",
++      "native_symbol": "__ZNK12IODMACommand19getMemoryDescriptorEv",
++      "evidence": "Same slot of paired vtables: every slot of these vtables whose original function the prelink map already pairs holds that same native function, so the layouts agree and this slot names the stubbed original. Proposed by UniXNU-penang scripts/pair-vtables.py."
++    },
++    {
++      "original": "0xfffffe000b4a8e50",
++      "original_size": 216,
++      "original_sha256": "3fccfffbd5ae23c0ffcdba90aecbfb047603aa378cfd5674678986ac944bfaa9",
++      "native_symbol": "__ZN12IODMACommand21clearMemoryDescriptorEb",
++      "evidence": "Same slot of paired vtables: every slot of these vtables whose original function the prelink map already pairs holds that same native function, so the layouts agree and this slot names the stubbed original. Proposed by UniXNU-penang scripts/pair-vtables.py."
++    },
++    {
++      "original": "0xfffffe000b4a8f28",
++      "original_size": 628,
++      "original_sha256": "bada94f7a23a9b06235c0ff2bdb81f1324cba571f245cb6770815d43ab98d01b",
++      "native_symbol": "__ZN12IODMACommand19setMemoryDescriptorEPK18IOMemoryDescriptorb",
++      "evidence": "Same slot of paired vtables: every slot of these vtables whose original function the prelink map already pairs holds that same native function, so the layouts agree and this slot names the stubbed original. Proposed by UniXNU-penang scripts/pair-vtables.py."
++    },
++    {
++      "original": "0xfffffe000b4a9320",
++      "original_size": 256,
++      "original_sha256": "909b8f2e0578dde239d94c0cf1ec6ef7ee2a1f3957e60019af02eca3a7fd701d",
++      "native_symbol": "__ZN12IODMACommand4freeEv",
++      "evidence": "Same slot of paired vtables: every slot of these vtables whose original function the prelink map already pairs holds that same native function, so the layouts agree and this slot names the stubbed original. Proposed by UniXNU-penang scripts/pair-vtables.py."
++    },
++    {
++      "original": "0xfffffe000b4bf8bc",
++      "original_size": 64,
++      "original_sha256": "6ea12a62fd74a3a21e4ea188b77baa74c95641cc2ee2d19236632c71f51f1a91",
++      "native_symbol": "__ZN21IOSubMemoryDescriptor11makeMappingEP18IOMemoryDescriptorP4taskyjyy",
++      "evidence": "Same slot of paired vtables: every slot of these vtables whose original function the prelink map already pairs holds that same native function, so the layouts agree and this slot names the stubbed original. Proposed by UniXNU-penang scripts/pair-vtables.py."
++    },
++    {
++      "original": "0xfffffe000b4bf964",
++      "original_size": 48,
++      "original_sha256": "431b25c5d722ff22757c4f74931df9fd2e71c45fa5a094255d4395197148612a",
++      "native_symbol": "__ZN21IOSubMemoryDescriptor8completeEj",
++      "evidence": "Same slot of paired vtables: every slot of these vtables whose original function the prelink map already pairs holds that same native function, so the layouts agree and this slot names the stubbed original. Proposed by UniXNU-penang scripts/pair-vtables.py."
++    },
++    {
++      "original": "0xfffffe000b4bf994",
++      "original_size": 48,
++      "original_sha256": "6b820b29571de2453f68f9d2ab13b317f748f3c74fa3eecff36a44866ebe3f98",
++      "native_symbol": "__ZN21IOSubMemoryDescriptor7prepareEj",
++      "evidence": "Same slot of paired vtables: every slot of these vtables whose original function the prelink map already pairs holds that same native function, so the layouts agree and this slot names the stubbed original. Proposed by UniXNU-penang scripts/pair-vtables.py."
++    },
++    {
++      "original": "0xfffffe000b4bfa44",
++      "original_size": 160,
++      "original_sha256": "1c161b968aef472a16376888c9a8a8d7ad347c356ef900bdb212dca459402267",
++      "native_symbol": "__ZN21IOSubMemoryDescriptor18getPhysicalSegmentEyPyj",
++      "evidence": "Same slot of paired vtables: every slot of these vtables whose original function the prelink map already pairs holds that same native function, so the layouts agree and this slot names the stubbed original. Proposed by UniXNU-penang scripts/pair-vtables.py."
++    },
++    {
++      "original": "0xfffffe000b4bfae4",
++      "original_size": 48,
++      "original_sha256": "fa572867ca70cf09ffde12f99f80a1141282cc704fc772cdcbc0fca9b3362d7f",
++      "native_symbol": "__ZN21IOSubMemoryDescriptor12setPurgeableEjPj",
++      "evidence": "Same slot of paired vtables: every slot of these vtables whose original function the prelink map already pairs holds that same native function, so the layouts agree and this slot names the stubbed original. Proposed by UniXNU-penang scripts/pair-vtables.py."
++    },
++    {
++      "original": "0xfffffe000b4f2788",
++      "original_size": 40,
++      "original_sha256": "b86a6bc2c8f9426e6bc7bd4b989deca6882e279133d3de23de303ae3598688cc",
++      "native_symbol": "__ZN11IODataQueue19setNotificationPortEP8ipc_port",
++      "evidence": "Same slot of paired vtables: every slot of these vtables whose original function the prelink map already pairs holds that same native function, so the layouts agree and this slot names the stubbed original. Proposed by UniXNU-penang scripts/pair-vtables.py."
++    },
++    {
++      "original": "0xfffffe000b4f2944",
++      "original_size": 100,
++      "original_sha256": "ae93084571dca69c0026dd8be0d29fb9ccb5858f950ddd6aba59c58731be461e",
++      "native_symbol": "__ZN11IODataQueue15initWithEntriesEjj",
++      "evidence": "Same slot of paired vtables: every slot of these vtables whose original function the prelink map already pairs holds that same native function, so the layouts agree and this slot names the stubbed original. Proposed by UniXNU-penang scripts/pair-vtables.py."
++    },
++    {
++      "original": "0xfffffe000b4f3538",
++      "original_size": 372,
++      "original_sha256": "72e7cc4be6c82da02c844e6c7bf6a3fe9a4ff6b54307255b4a544cb087d28714",
++      "native_symbol": "__ZN17IOSharedDataQueue7dequeueEPvPj",
++      "evidence": "Same slot of paired vtables: every slot of these vtables whose original function the prelink map already pairs holds that same native function, so the layouts agree and this slot names the stubbed original. Proposed by UniXNU-penang scripts/pair-vtables.py."
++    },
++    {
++      "original": "0xfffffe000b4f36ac",
++      "original_size": 140,
++      "original_sha256": "380fc7a7b0e0a3cbfc93bf4881cbf4c1a1db0878b863ac7ca4b9094a7f148856",
++      "native_symbol": "__ZN17IOSharedDataQueue4peekEv",
++      "evidence": "Same slot of paired vtables: every slot of these vtables whose original function the prelink map already pairs holds that same native function, so the layouts agree and this slot names the stubbed original. Proposed by UniXNU-penang scripts/pair-vtables.py."
++    },
++    {
++      "original": "0xfffffe000b4f3770",
++      "original_size": 444,
++      "original_sha256": "c82e7c0fb1fe4baf8c0925b3ed1d5e4746159a5aa205b3c7d11ecac5a0865336",
++      "native_symbol": "__ZN17IOSharedDataQueue7enqueueEPvj",
++      "evidence": "Same slot of paired vtables: every slot of these vtables whose original function the prelink map already pairs holds that same native function, so the layouts agree and this slot names the stubbed original. Proposed by UniXNU-penang scripts/pair-vtables.py."
++    },
++    {
++      "original": "0xfffffe000b4f3a9c",
++      "original_size": 160,
++      "original_sha256": "1dde712185492dce775eb6d4a627c8128836084086acb6b7c9446cd37e273c96",
++      "native_symbol": "__ZN17IOSharedDataQueue4freeEv",
++      "evidence": "Same slot of paired vtables: every slot of these vtables whose original function the prelink map already pairs holds that same native function, so the layouts agree and this slot names the stubbed original. Proposed by UniXNU-penang scripts/pair-vtables.py."
++    },
++    {
++      "original": "0xfffffe000af255d0",
++      "original_size": 16,
++      "original_sha256": "28722c00e4307a8e059d852c60527aa0c47e75dd3ff81eb6d8b17391484879a9",
++      "native_symbol": "_vnode_ref",
++      "evidence": "Normalized code (3 instructions; BTI pads and upstream clang's PAC failure checks removed) equals the native function, the only unpaired candidate of that shape whose 1 references already paired by the prelink map (callees and data) are the same. Proposed by UniXNU-penang scripts/pair-normalized.py for a prelink stub."
++    },
++    {
++      "original": "0xfffffe000b4c3ac4",
++      "original_size": 72,
++      "original_sha256": "b4612665d69708ccff1c5a76aae6063c7539312944ad8b79d5bb888ed3b5c82c",
++      "native_symbol": "__ZN18IODTPlatformExpert18writeNVRAMPropertyEP15IORegistryEntryPK8OSSymbolP6OSData",
++      "evidence": "Same slot of paired vtables: every slot of these vtables whose original function the prelink map already pairs holds that same native function, so the layouts agree and this slot names the stubbed original. Proposed by UniXNU-penang scripts/pair-vtables.py."
++    },
++    {
++      "original": "0xfffffe000b4c3b0c",
++      "original_size": 72,
++      "original_sha256": "00536444b9e55d2e97516038ac5358f9153433c13fdbc9d63f61bb92aaa7452c",
++      "native_symbol": "__ZN18IODTPlatformExpert17readNVRAMPropertyEP15IORegistryEntryPPK8OSSymbolPP6OSData",
++      "evidence": "Same slot of paired vtables: every slot of these vtables whose original function the prelink map already pairs holds that same native function, so the layouts agree and this slot names the stubbed original. Proposed by UniXNU-penang scripts/pair-vtables.py."
++    },
++    {
++      "original": "0xfffffe000b4c3ea8",
++      "original_size": 280,
++      "original_sha256": "536e4d1912fe1ed34c5fe95c05c492eb9ae6b443a2139b7626f58f8248435365",
++      "native_symbol": "__ZN18IODTPlatformExpert9createNubEP15IORegistryEntry",
++      "evidence": "Same slot of paired vtables: every slot of these vtables whose original function the prelink map already pairs holds that same native function, so the layouts agree and this slot names the stubbed original. Proposed by UniXNU-penang scripts/pair-vtables.py."
++    },
++    {
++      "original": "0xfffffe000b4c4518",
++      "original_size": 52,
++      "original_sha256": "2aa9fff290d234d1c1592ab1f42b482b578662730678ff75e1906f444b74ed71",
++      "native_symbol": "__ZN18IODTPlatformExpert14getProductNameEPci",
++      "evidence": "Same slot of paired vtables: every slot of these vtables whose original function the prelink map already pairs holds that same native function, so the layouts agree and this slot names the stubbed original. Proposed by UniXNU-penang scripts/pair-vtables.py."
++    },
++    {
++      "original": "0xfffffe000b4c454c",
++      "original_size": 52,
++      "original_sha256": "9f064f3de39329f37da78c71f5b9517336e83b6601b385381d81f84cb76061d7",
++      "native_symbol": "__ZN18IODTPlatformExpert13getTargetNameEPci",
++      "evidence": "Same slot of paired vtables: every slot of these vtables whose original function the prelink map already pairs holds that same native function, so the layouts agree and this slot names the stubbed original. Proposed by UniXNU-penang scripts/pair-vtables.py."
++    },
++    {
++      "original": "0xfffffe000b4c4720",
++      "original_size": 84,
++      "original_sha256": "61d9448cff5a304966ecbeba8dff99c1c55472c9f041224bd1ae3102c1b7c264",
++      "native_symbol": "__ZN18IODTPlatformExpert13savePanicInfoEPhy",
++      "evidence": "Same slot of paired vtables: every slot of these vtables whose original function the prelink map already pairs holds that same native function, so the layouts agree and this slot names the stubbed original. Proposed by UniXNU-penang scripts/pair-vtables.py."
++    },
++    {
++      "original": "0xfffffe000b4c4774",
++      "original_size": 84,
++      "original_sha256": "2a7315a1ce48bc389aab62047455c26944ba49af453f52f31860d58cf2ec6ebe",
++      "native_symbol": "__ZN18IODTPlatformExpert23registerNVRAMControllerEP17IONVRAMController",
++      "evidence": "Same slot of paired vtables: every slot of these vtables whose original function the prelink map already pairs holds that same native function, so the layouts agree and this slot names the stubbed original. Proposed by UniXNU-penang scripts/pair-vtables.py."
++    },
++    {
++      "original": "0xfffffe000b4c47c8",
++      "original_size": 68,
++      "original_sha256": "72d5e8722e3ee136f83867f07318900d4262d83d0db86f44b15f64a0c2b4101b",
++      "native_symbol": "__ZN18IODTPlatformExpert11haltRestartEj",
++      "evidence": "Same slot of paired vtables: every slot of these vtables whose original function the prelink map already pairs holds that same native function, so the layouts agree and this slot names the stubbed original. Proposed by UniXNU-penang scripts/pair-vtables.py."
++    },
++    {
++      "original": "0xfffffe000b4c480c",
++      "original_size": 192,
++      "original_sha256": "e0e0963c5b63d498aebcebeeca90d1bf27be547531256cceed4b99becb0aa7a3",
++      "native_symbol": "__ZN18IODTPlatformExpert14getMachineNameEPci",
++      "evidence": "Same slot of paired vtables: every slot of these vtables whose original function the prelink map already pairs holds that same native function, so the layouts agree and this slot names the stubbed original. Proposed by UniXNU-penang scripts/pair-vtables.py."
++    },
++    {
++      "original": "0xfffffe000b4c4a08",
++      "original_size": 100,
++      "original_sha256": "3bebce9b41c008265283301ab430fb044eab11eae55926d779db7c041cccc945",
++      "native_symbol": "__ZN18IODTPlatformExpert15getNubResourcesEP9IOService",
++      "evidence": "Same slot of paired vtables: every slot of these vtables whose original function the prelink map already pairs holds that same native function, so the layouts agree and this slot names the stubbed original. Proposed by UniXNU-penang scripts/pair-vtables.py."
++    },
++    {
++      "original": "0xfffffe000b4c4ad4",
++      "original_size": 88,
++      "original_sha256": "c01e0f6f9ab83a585f0faa2f487830e6c16abf193ab1ece0686d457adb26daaa",
++      "native_symbol": "__ZN18IODTPlatformExpert9configureEP9IOService",
++      "evidence": "Same slot of paired vtables: every slot of these vtables whose original function the prelink map already pairs holds that same native function, so the layouts agree and this slot names the stubbed original. Proposed by UniXNU-penang scripts/pair-vtables.py."
++    },
++    {
++      "original": "0xfffffe000b4c4b2c",
++      "original_size": 148,
++      "original_sha256": "1a1bd121fcabd6346d4b011772601a24b88e2017322332161995dc7cf5b5f516",
++      "native_symbol": "__ZN18IODTPlatformExpert5probeEP9IOServicePi",
++      "evidence": "Same slot of paired vtables: every slot of these vtables whose original function the prelink map already pairs holds that same native function, so the layouts agree and this slot names the stubbed original. Proposed by UniXNU-penang scripts/pair-vtables.py."
++    },
++    {
++      "original": "0xfffffe000b4db614",
++      "original_size": 204,
++      "original_sha256": "13a9e205840d174b05cd6ffc97d03d98f729fe70417b09717833815ceb53480a",
++      "native_symbol": "__ZN21IOInterruptController16disableInterruptEP9IOServicei",
++      "evidence": "Same slot of paired vtables: every slot of these vtables whose original function the prelink map already pairs holds that same native function, so the layouts agree and this slot names the stubbed original. Proposed by UniXNU-penang scripts/pair-vtables.py."
++    },
++    {
++      "original": "0xfffffe000b4db7f8",
++      "original_size": 212,
++      "original_sha256": "c46803301a5a3435a5627b2ce13368c2f51faef4d95c4ffda4a71bb877ca34ba",
++      "native_symbol": "__ZN21IOInterruptController16getInterruptTypeEP9IOServiceiPi",
++      "evidence": "Same slot of paired vtables: every slot of these vtables whose original function the prelink map already pairs holds that same native function, so the layouts agree and this slot names the stubbed original. Proposed by UniXNU-penang scripts/pair-vtables.py."
++    },
++    {
++      "original": "0xfffffe000b4dba54",
++      "original_size": 1316,
++      "original_sha256": "40f92329017dfea266e551ac4dbe4db543e3532c7f8760d6755d2d81b86bd4e6",
++      "native_symbol": "__ZN21IOInterruptController17registerInterruptEP9IOServiceiPvPFvS2_S2_S2_iES2_",
++      "evidence": "Same slot of paired vtables: every slot of these vtables whose original function the prelink map already pairs holds that same native function, so the layouts agree and this slot names the stubbed original. Proposed by UniXNU-penang scripts/pair-vtables.py."
      }
    ],
    "data": [
-@@ -1271,6 +1908,24 @@
+@@ -1271,6 +2279,24 @@
        "native_symbol": "_gPESerialBaud",
        "addend": 0,
        "evidence": "32-bit global holding -1 in the original image. IOSerialFamily reads it when it sets a new tty up, takes 9600 when it is -1 and stores the result in t_ispeed and t_ospeed. Source pexpert/gen/pe_gen.c int32_t gPESerialBaud = -1, exported in config/Unsupported.exports; the kernel itself has no reader in the original image."
