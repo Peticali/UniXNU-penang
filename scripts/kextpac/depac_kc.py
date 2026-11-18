@@ -64,6 +64,11 @@ done = collections.Counter()
 for name, fo in entries:
     if (only and name not in only) or (name == 'com.apple.kernel' and not with_kernel):
         continue                                    # (unless --with-kernel: a native arm64e kernel is rewritten too)
+    if name == 'com.apple.kernel' and with_kernel and struct.unpack_from('<I', kc, fo + 8)[0] != struct.unpack_from('<I', kc, 8)[0]:
+        # DarwinBoot wants the kernel entry's cpusubtype to equal the collection's. Upstream clang leaves out the
+        # kernel pointer-auth ABI bit Apple's sets (0x80000002 vs 0xc0000002); there is no PAC left after this tool.
+        struct.pack_into('<I', kc, fo + 8, struct.unpack_from('<I', kc, 8)[0])
+        done['kernel-cpusubtype'] += 1
     nc = struct.unpack_from('<I', kc, fo + 16)[0]
     # corecrypto's FIPS POST checks HMAC-SHA256 (one zero-byte key) of its __TEXT_EXEC,__text against __fips_hmacs:
     # remember the field if it covers the original bytes, and seal the rewritten ones below (as XnuPrelink reseals).
