@@ -50,3 +50,19 @@ The interim payload script needs `tools/adt.py` and `tools/mkpayload.py` of the 
   iOS 26 root and kernel patch base of the penang XNU port.
 - [Bergamota](https://github.com/ry-diffusion/bergamota): prior art for iOS on a CPU without PAC (no code used).
 - [Project Silicium](https://github.com/Project-Silicium/Mu-Silicium): the UEFI base of `uefi-penang`.
+
+## Reproduce from scratch
+
+    git clone https://github.com/UniXNU/UniXNU && git clone <this repo> UniXNU-penang && git clone <uefi-penang> -b penang
+    UniXNU-penang/scripts/setup-unixnu.sh               # applies patches/unixnu/* to UniXNU (idempotent)
+    # toolchain once: UniXNU's scripts/linux/setup-toolchain.py (see scripts/env.sh for the paths this board uses)
+    . UniXNU-penang/scripts/env.sh && cd UniXNU
+    ./unixnu defconfig penang_defconfig -D ../UniXNU-penang && ./unixnu fetch -D ../UniXNU-penang
+    ../UniXNU-penang/scripts/kextpac/make-kernelcache.sh <dir>     # the profile's kernelcache, pin-checked
+    ./unixnu kernel -D ../UniXNU-penang                 # arm64e kernel + prelink, as UniXNU
+    ../UniXNU-penang/scripts/kextpac/depac-kernel.sh    # kernel.macho without PAC
+    ./unixnu payload -D ../UniXNU-penang                # needs UNIXNU_UNIQUE_CHIP_ID (local.env, never committed)
+
+Everything this port changes lives here: `patches/xnu/*` (kernel), `patches/unixnu/*` (UniXNU itself, applied by
+`setup-unixnu.sh`), `board.toml` overrides and `scripts/`. The firmware is its own repository (uefi-penang). Nothing is
+edited in a UniXNU checkout by hand.

@@ -66,6 +66,10 @@ packages = ["{uefi}", "{tree}/package", "{tree}/drivers/DarwinBoot", "{edk2}"]
 DEVICE_MODEL = "penang"
 
 [payload]
+# Bring-up (UniXNU docs/guide/debugging.md#green-bar): blue bar = kernel entry ran (MMU off), magenta = just before the MMU
+# is enabled; a PSCI reset 6 s after MMU enable proves that stage.
+panic_screen = true
+entry_probe_reset_delay = 6
 volume = "UNIXNU"
 size_mib = 112   # kernel.macho is 95 MB; keeps the RAM boot image small for the ABL
 loader = "firmware"

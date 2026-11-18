@@ -1,0 +1,50 @@
+diff --git a/NativeAdrenoMetalPlugin.mm b/NativeAdrenoMetalPlugin.mm
+index ee72363..9bd1cab 100644
+--- a/NativeAdrenoMetalPlugin.mm
++++ b/NativeAdrenoMetalPlugin.mm
+@@ -704,6 +704,21 @@ static id deviceForPort(unsigned port) {
+ }  // namespace publish
+ 
+ @implementation NativeAdrenoMetalDevice
++// PENANG: processes named in /private/var/local/native-metal-exclude (one per line) get no native device and keep their CPU
++// path, as IOS-26-Hot keeps WidgetRenderer_Default / PosterBoard off Metal (RenderBox _RB4 two-plane targets).
++static bool penangExcluded() {
++    FILE *f = fopen("/private/var/local/native-metal-exclude", "r");
++    if (!f) return false;
++    char line[128];
++    bool hit = false;
++    const char *me = getprogname();
++    while (!hit && fgets(line, sizeof line, f)) {
++        line[strcspn(line, "\r\n")] = 0;
++        hit = line[0] && !strcmp(line, me);
++    }
++    fclose(f);
++    return hit;
++}
+ - (id)initWithAcceleratorPort:(unsigned)port {
+ #if TARGET_OS_OSX
+     // The registered device is the frontend's object, not this one: IOGPUMetalDevice's own initializer would open an IOGPU user client.
+@@ -717,6 +732,7 @@ static id deviceForPort(unsigned port) {
+     self = [super init];
+     if (!self || !port) return nil;
+ #endif
++    if (penangExcluded()) return nil;
+     if (publish::requested()) return publish::deviceForPort(port);
+     static bool attempted;
+     if (attempted) return nil;
+diff --git a/NativeBridgeMetalFrontend.mm b/NativeBridgeMetalFrontend.mm
+index df72c78..b5ae18b 100644
+--- a/NativeBridgeMetalFrontend.mm
++++ b/NativeBridgeMetalFrontend.mm
+@@ -5346,7 +5346,10 @@ extern "C" id native_bridge_metal_open(const char *loader,const char *cache,uint
+ #if defined(__arm64e__)
+  if(!base){NBLOG(@"native-metal: no _MTLDevice");return nil;}
+ #else
+- if(!base || class_getInstanceSize(base)!=536){NBLOG(@"native-metal: unexpected _MTLDevice ABI");return nil;}
++ // PENANG: iOS 26 (arm64, de-PAC'd) has a 656-byte _MTLDevice; the subclass reads none of the base's ivars, so any size works
++ // (as the arm64e build and IOS-26-Hot's HotMetal2 hold): logged, not refused.
++ if(!base){NBLOG(@"native-metal: no _MTLDevice");return nil;}
++ if(class_getInstanceSize(base)!=536)NBLOG(@"native-metal: _MTLDevice is %zu bytes (iPadOS 17.7.11: 536)",class_getInstanceSize(base));
+ #endif
+ #endif
+  if(!base)base=[NSObject class];

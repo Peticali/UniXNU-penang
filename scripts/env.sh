@@ -10,3 +10,5 @@ export UNIXNU_KERNELCACHE=${UNIXNU_KERNELCACHE:-/mnt/nvme/xnu-build/ios26/kc/24A
 
 # Per-machine values that must not be committed (the platform seed): local.env
 [ -f "$(dirname "${BASH_SOURCE:-$0}")/../local.env" ] && . "$(dirname "${BASH_SOURCE:-$0}")/../local.env"
+# The firmware checkout next to UniXNU (uefi-penang): the payload's panic screen uses its framebuffer font.
+export UNIXNU_UEFI=${UNIXNU_UEFI:-$(cd "$(dirname "${BASH_SOURCE:-$0}")/../../uefi-penang" 2>/dev/null && pwd)}
