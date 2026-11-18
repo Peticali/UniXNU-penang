@@ -1,8 +1,8 @@
 diff --git a/fixtures/fileset-24A446-symbols.json b/fixtures/fileset-24A446-symbols.json
-index bcc5ee9..21cde74 100644
+index bcc5ee9..a6b8a62 100644
 --- a/fixtures/fileset-24A446-symbols.json
 +++ b/fixtures/fileset-24A446-symbols.json
-@@ -1095,6 +1095,636 @@
+@@ -1095,6 +1095,643 @@
        "original_sha256": "461f0cd8c82fda303d244bd2e7d866dfa0a3a0e88e4e29eeaa32547988cb1a92",
        "native_symbol": "_ml_io_read8",
        "evidence": "Loads and returns one byte at x0. Directly precedes ml_io_read16, ml_io_read32 and ml_io_read64, which have the same shape for their widths. Source osfmk/arm64/machine_routines.c ml_io_read8; the native development build adds its timing checks around the same read."
@@ -636,10 +636,17 @@ index bcc5ee9..21cde74 100644
 +      "original_sha256": "930f61c09a0cf9f579aac3792ba1ec923be8f6d0580314798a789491656c60fa",
 +      "native_symbol": "__ZN18IOTimerEventSource16timerEventSourceEP8OSObjectPFvS1_PS_E",
 +      "evidence": "Two-argument factory (owner, action): allocates a 0x60-byte IOTimerEventSource with kalloc_type and initializes it, the three-argument form with options 0 inlined. Follows timerEventSource(unsigned, OSObject*, block) and precedes the IOBufferMemoryDescriptor methods, as the overloads are ordered in IOTimerEventSource.cpp. Imported by CoreAnalyticsFamily's start (panic on the device)."
++    },
++    {
++      "original": "0xfffffe000b4feb88",
++      "original_size": 696,
++      "original_sha256": "96710f4a9b50f8fbca0c404417532fcc42c1ab91fba570146ad69b210394948b",
++      "native_symbol": "__ZN14IOReportLegend17addReporterLegendEP9IOServiceP10IOReporterPKcS5_",
++      "evidence": "Static form: rejects a null service or reporter with kIOReturnBadArgument (0xe00002bc), reads the service's 'IOReportLegend' property through its vtable, builds the reporter's legend (IOReporter::createLegend) and adds it (IOReportLegend::addLegendEntry, the three-argument member form inlined), then publishes it with 'IOReportLegendPublic'. Source: iokit/Kernel/IOReportLegend.cpp. Imported by CoreAnalyticsFamily's start (panic on the device)."
      }
    ],
    "data": [
-@@ -1271,6 +1901,24 @@
+@@ -1271,6 +1908,24 @@
        "native_symbol": "_gPESerialBaud",
        "addend": 0,
        "evidence": "32-bit global holding -1 in the original image. IOSerialFamily reads it when it sets a new tty up, takes 9600 when it is -1 and stores the result in t_ispeed and t_ospeed. Source pexpert/gen/pe_gen.c int32_t gPESerialBaud = -1, exported in config/Unsupported.exports; the kernel itself has no reader in the original image."
