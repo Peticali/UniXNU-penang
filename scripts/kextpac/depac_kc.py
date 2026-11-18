@@ -12,7 +12,11 @@
    ldraa/ldrab and pacga have no 1:1 equivalent and stop the tool if present.
 2. Pointers: every DYLD_CHAINED_PTR_64_KERNEL_CACHE (format 8) fixup with isAuth=1 becomes a plain rebase to the
    same target (isAuth, key, addrDiv and diversity cleared; target, cacheLevel and next kept).
-The Mach-O header's cpusubtype stays arm64e (the loader's choice is separate)."""
+The Mach-O header's cpusubtype stays arm64e (the loader's choice is separate).
+
+Written for the penang port. The 1:1 rewrite rules are the ones of IOS-26-Hot's tools/de-pac-arm64e.py
+(https://github.com/nithinyadavamaraboina-online/IOS-26-Hot, MIT, Copyright (c) 2026 dipa-studio), which de-PACs
+the userland; this tool adds the kernelcache fileset walk and the chained-fixup auth bits."""
 import struct, sys, collections
 
 src, dst = sys.argv[1], sys.argv[2]

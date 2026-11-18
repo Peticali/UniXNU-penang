@@ -30,3 +30,13 @@ Known: the system resets ~40-70 s after SpringBoard (PS_HOLD), as on the old shi
     fastboot boot <boot image>     # never flash: RAM boot only
 
 The interim payload script needs `tools/adt.py` and `tools/mkpayload.py` of the penang XNU port next to it.
+
+## Credits
+
+- [UniXNU](https://github.com/UniXNU/UniXNU) (BSD-2-Clause-Patent): boot manager, DarwinBoot, XnuPrelink, profiles.
+  `profiles/os/ios-26.6.2-23G90-nopac` is derived from its `ipados-26.5.2-23F84` profile.
+- [IOS-26-Hot](https://github.com/nithinyadavamaraboina-online/IOS-26-Hot) (MIT, (c) 2026 dipa-studio): the userland
+  de-PAC rewriter (`de-pac-arm64e.py`) whose 1:1 rules `scripts/kextpac/depac_kc.py` applies to the kexts, and the
+  iOS 26 root and kernel patch base of the penang XNU port.
+- [Bergamota](https://github.com/ry-diffusion/bergamota): prior art for iOS on a CPU without PAC (no code used).
+- [Project Silicium](https://github.com/Project-Silicium/Mu-Silicium): the UEFI base of `uefi-penang`.

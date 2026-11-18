@@ -1,3 +1,6 @@
+# Derived from UniXNU profiles/os/ipados-26.5.2-23F84 (https://github.com/UniXNU/UniXNU)
+# Copyright (c) 2026, UniXNU contributors. SPDX-License-Identifier: BSD-2-Clause-Patent
+# Changes for penang: arch arm64 (no PAC), iPhone12,1 23G90 IPSW, de-PAC'd kernelcache hash, AMFI early initializer.
 ["os"]
 "name" = "ios-26.6.2-23G90-nopac"
 "arch" = "arm64"   # PENANG: no PAC in hardware (Cortex-A76/A55); kexts and userland are de-PAC'd
