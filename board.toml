@@ -70,8 +70,8 @@ DEVICE_MODEL = "penang"
 # is enabled; a PSCI reset 6 s after MMU enable proves that stage.
 panic_screen = false   # its code (0xa27 bytes with upstream clang) does not fit the kernel padding (0x9d0)
 entry_probe_reset_delay = 6
-entry_probe_reset_after = "_PE_init_iokit"   # -v text only appears in PE_init_iokit (vcattach): past kernel_startup_initialize_upto
-entry_probe_reset_in = "_kernel_bootstrap_thread"
+entry_probe_reset_after = "_machine_startup"   # froze before PE_init_iokit; past kernel_startup_initialize_upto
+entry_probe_reset_in = "_arm_init"
 entry_probe_reset_before = true
 volume = "UNIXNU"
 size_mib = 112   # kernel.macho is 95 MB; keeps the RAM boot image small for the ABL
