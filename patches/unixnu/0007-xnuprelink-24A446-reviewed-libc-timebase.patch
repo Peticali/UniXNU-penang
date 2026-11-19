@@ -1,8 +1,8 @@
 diff --git a/fixtures/fileset-24A446-symbols.json b/fixtures/fileset-24A446-symbols.json
-index bcc5ee9..7b7e974 100644
+index bcc5ee9..dd5cdbe 100644
 --- a/fixtures/fileset-24A446-symbols.json
 +++ b/fixtures/fileset-24A446-symbols.json
-@@ -1095,6 +1095,1525 @@
+@@ -1095,6 +1095,1532 @@
        "original_sha256": "461f0cd8c82fda303d244bd2e7d866dfa0a3a0e88e4e29eeaa32547988cb1a92",
        "native_symbol": "_ml_io_read8",
        "evidence": "Loads and returns one byte at x0. Directly precedes ml_io_read16, ml_io_read32 and ml_io_read64, which have the same shape for their widths. Source osfmk/arm64/machine_routines.c ml_io_read8; the native development build adds its timing checks around the same read."
@@ -1525,10 +1525,17 @@ index bcc5ee9..7b7e974 100644
 +      "original_sha256": "f29ac9c35cadd0900f1dd5babf5b1da32dfc239c678354c7114c5d0b12fdd1db",
 +      "native_symbol": "__ZN9IOService23registryEntryIDMatchingEyP12OSDictionary",
 +      "evidence": "2026-11-19 u27-aks2 (first panic read back from the UFS log window): IOReportFamily +0xad8, from an IOUserClient external method, called it unmapped with x0 0x100000138 (a registry entry ID) and x1 0 (no table). Body: OSDictionary::withCapacity when the table is NULL, then the entry ID key = registryEntryIDMatching(uint64_t, OSDictionary *); pair-callers 0.89 (the OSSharedPtr overload 0.70)."
++    },
++    {
++      "original": "0xfffffe000b41725c",
++      "original_size": 360,
++      "original_sha256": "f60f425d4cfcbaa8238e2e572e4f79a048c3730c39d6b669714049091a943bf7",
++      "native_symbol": "__ZN11OSSerialize18binaryWithCapacityEjPvS0_",
++      "evidence": "2026-11-19 u27-cs2 (panic read back from the UFS log, after 14 min with SpringBoard up): IOSurface +0x276fc, from an IOUserClient external method, called it unmapped with x0 0x3ff4 x1 0. Body: 'cmp w0, #4; b.hs; mov x0, #0; ret' = 'if (inCapacity < sizeof(uint32_t)) return NULL' of OSSerialize::binaryWithCapacity(unsigned int, Editor, void *), then withCapacity with the three arguments kept; pair-callers 0.50 (IOReportLegend::with 0.59 takes one argument)."
      }
    ],
    "data": [
-@@ -1271,6 +2790,30 @@
+@@ -1271,6 +2797,30 @@
        "native_symbol": "_gPESerialBaud",
        "addend": 0,
        "evidence": "32-bit global holding -1 in the original image. IOSerialFamily reads it when it sets a new tty up, takes 9600 when it is -1 and stores the result in t_ispeed and t_ospeed. Source pexpert/gen/pe_gen.c int32_t gPESerialBaud = -1, exported in config/Unsupported.exports; the kernel itself has no reader in the original image."
