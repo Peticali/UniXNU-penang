@@ -1,0 +1,99 @@
+penang: emulate, do not rewrite, the PAC instructions of libobjc-trampolines.dylib: the sealed volume hashes it in 16 KiB compressed chunks and a rewritten resident 4 KiB page made the next neighbour page-in fail (u27-cs1).
+
+--- a/osfmk/vm/vm_fault.c
++++ b/osfmk/vm/vm_fault.c
+@@ -9599,6 +9599,46 @@
+  * means the page is either valid or we don't have the
+  * information to say it's corrupt.
+  */
++/*
++ * penang: whether a user text address lies in a file whose pages the user PAC trap must not rewrite in place. The sealed system
++ * volumes keep files compressed in 16 KiB chunks, each with its own hash, while this kernel pages in 4 KiB: once the trap rewrote a
++ * page of libobjc-trampolines.dylib (offset 0x4000, the trampoline page objc remaps for every block IMP), the next page-in of a
++ * neighbour in the same chunk hashed the rewritten resident page with it ("Data hash mismatch ... 16384 bytes at offset 16384 in
++ * compressed data stream 4833 of inode 4832", decmpfs err 94) and SpringBoard died of SIGBUS while building the lock screen
++ * (u27-cs1). Its PAC instructions are emulated instead (penang-user-pac-header-emulate's path).
++ */
++extern const char *vnode_getname(struct vnode *vp);
++extern void vnode_putname(const char *name);
++bool penang_pac_file_needs_emulation(vm_map_offset_t addr);
++bool
++penang_pac_file_needs_emulation(vm_map_offset_t addr)
++{
++	task_t task = current_task();
++	vm_object_t object = NULL;
++	vm_object_offset_t offset;
++	vm_page_t page = NULL;
++	vm_prot_t prot;
++	bool emulate = false;
++	VM_MAP_LOCK_CTX_DECLARE(ctx);
++
++	if (task == TASK_NULL || task->map == VM_MAP_NULL) {
++		return false;
++	}
++	if (vmtc_revalidate_lookup(task->map, ctx, addr, &object, &offset, &page, &prot) != KERN_SUCCESS) {
++		return false;
++	}
++	if (object->pager != NULL) {
++		struct vnode *vnode = vnode_pager_lookup_vnode(object->pager);
++		const char *name = vnode ? vnode_getname(vnode) : NULL;
++		if (name != NULL) {
++			emulate = strcmp(name, "libobjc-trampolines.dylib") == 0;
++			vnode_putname(name);
++		}
++	}
++	vm_object_unlock(object);
++	return emulate;
++}
++
+ kern_return_t
+ revalidate_text_page(task_t task, vm_map_offset_t code_addr)
+ {
+--- a/osfmk/arm64/sleh.c
++++ b/osfmk/arm64/sleh.c
+@@ -1336,6 +1336,36 @@
+ 	return false;
+ }
+ 
++/*
++ * The pages of files whose PAC instructions are emulated rather than rewritten (penang_pac_file_needs_emulation, vm_fault.c:
++ * libobjc-trampolines.dylib, compressed in hashed 16 KiB chunks). An emulated instruction traps on every execution, so the physical
++ * pages already found in such a file are remembered (objc remaps the trampoline page at many addresses, all one physical page).
++ */
++extern bool penang_pac_file_needs_emulation(vm_map_offset_t addr);
++static uint64_t penang_pac_emulated_pages[16];
++static uint32_t penang_pac_emulated_next;
++static bool
++penang_pac_in_emulated_file(uint64_t pc)
++{
++	uint64_t par;
++	__asm__ volatile ("at s1e1r, %1\n\tisb\n\tmrs %0, par_el1" : "=r"(par) : "r"(pc) : "memory");
++	if (par & 1) {
++		return false;
++	}
++	const uint64_t pa = par & 0x0000fffffffff000ULL;
++	for (unsigned i = 0; i < 16; ++i) {
++		if (__atomic_load_n(&penang_pac_emulated_pages[i], __ATOMIC_RELAXED) == pa) {
++			return true;
++		}
++	}
++	if (!penang_pac_file_needs_emulation((vm_map_offset_t)pc)) {
++		return false;
++	}
++	const uint32_t slot = __atomic_fetch_add(&penang_pac_emulated_next, 1, __ATOMIC_RELAXED) & 15U;
++	__atomic_store_n(&penang_pac_emulated_pages[slot], pa, __ATOMIC_RELAXED);
++	return true;
++}
++
+ /* The ARMv8.0 replacement of a rewrite, executed once instead of written: ret/br/blr Xn, nop, mov Xd, xzr. */
+ static bool
+ penang_pac_emulate(arm_saved_state64_t *ss, uint32_t r)
+@@ -1377,7 +1407,7 @@
+ 	arm_saved_state64_t *ss = saved_state64(state);
+ 	uint64_t pc = ss->pc;
+ 	uint32_t replacement = penang_pac_rewrite(instr);
+-	const bool header = replacement != 0 && penang_pac_in_header_pages(pc);
++	const bool header = replacement != 0 && (penang_pac_in_header_pages(pc) || penang_pac_in_emulated_file(pc));
+ 	if (header && penang_pac_emulate(ss, replacement)) {
+ 		__atomic_fetch_add(&penang_pac_header, 1, __ATOMIC_RELAXED);
+ 		return true;

@@ -29,3 +29,4 @@ penang-owner-dataprotect.patch
 # penang-smp-sigp-recover.patch   (off: u27-sigp1 was reset by the hardware watchdog ~12 s after SpringBoard; bisecting)
 penang-launchd-job-policy.patch
 penang-cs-tolerate-pac-taint.patch
+penang-pac-emulate-sealed-chunks.patch
