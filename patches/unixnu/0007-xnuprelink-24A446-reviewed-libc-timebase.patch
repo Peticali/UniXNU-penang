@@ -1,8 +1,8 @@
 diff --git a/fixtures/fileset-24A446-symbols.json b/fixtures/fileset-24A446-symbols.json
-index bcc5ee9..91e7c87 100644
+index bcc5ee9..7b7e974 100644
 --- a/fixtures/fileset-24A446-symbols.json
 +++ b/fixtures/fileset-24A446-symbols.json
-@@ -1095,6 +1095,1518 @@
+@@ -1095,6 +1095,1525 @@
        "original_sha256": "461f0cd8c82fda303d244bd2e7d866dfa0a3a0e88e4e29eeaa32547988cb1a92",
        "native_symbol": "_ml_io_read8",
        "evidence": "Loads and returns one byte at x0. Directly precedes ml_io_read16, ml_io_read32 and ml_io_read64, which have the same shape for their widths. Source osfmk/arm64/machine_routines.c ml_io_read8; the native development build adds its timing checks around the same read."
@@ -1518,10 +1518,17 @@ index bcc5ee9..91e7c87 100644
 +      "original_sha256": "2bb75effd1ff2c0a912ff993128b493913182c79f8e63b99160b3b65cbf9879a",
 +      "native_symbol": "_lck_rw_gate_wait",
 +      "evidence": "2026-11-18 u27-smp2: APFS +0xc6ffc called it unmapped in VNOP_LOOKUP (open). Five arguments (lock, gate, lck_sleep_action, interruptible, deadline); the action tests are the rw-lock ones (bit 0 UNLOCK, 0x6 SHARED|EXCLUSIVE, bit 2 EXCLUSIVE), not the mutex SPIN bits of lck_mtx_gate_wait; pair-callers 0.38 ranks it first."
++    },
++    {
++      "original": "0xfffffe000b473638",
++      "original_size": 344,
++      "original_sha256": "f29ac9c35cadd0900f1dd5babf5b1da32dfc239c678354c7114c5d0b12fdd1db",
++      "native_symbol": "__ZN9IOService23registryEntryIDMatchingEyP12OSDictionary",
++      "evidence": "2026-11-19 u27-aks2 (first panic read back from the UFS log window): IOReportFamily +0xad8, from an IOUserClient external method, called it unmapped with x0 0x100000138 (a registry entry ID) and x1 0 (no table). Body: OSDictionary::withCapacity when the table is NULL, then the entry ID key = registryEntryIDMatching(uint64_t, OSDictionary *); pair-callers 0.89 (the OSSharedPtr overload 0.70)."
      }
    ],
    "data": [
-@@ -1271,6 +2783,30 @@
+@@ -1271,6 +2790,30 @@
        "native_symbol": "_gPESerialBaud",
        "addend": 0,
        "evidence": "32-bit global holding -1 in the original image. IOSerialFamily reads it when it sets a new tty up, takes 9600 when it is -1 and stores the result in t_ispeed and t_ospeed. Source pexpert/gen/pe_gen.c int32_t gPESerialBaud = -1, exported in config/Unsupported.exports; the kernel itself has no reader in the original image."
