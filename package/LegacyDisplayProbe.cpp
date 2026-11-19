@@ -524,8 +524,9 @@ void native_legacy_display_probe(void) {
     native_legacy_stage=7;display->release();native_legacy_released=1;native_legacy_stage=8;
     native_legacy_display_checkpoint();
 }
-// penang: no UFS boot log reads these counters here (sheng's BootLog.c diagnostic page does); every 15 s for 10 minutes the
-// display state goes to the console instead, so one photo shows whether a client opened the display and frames arrive.
+// penang: no UFS boot log reads these counters here (sheng's BootLog.c diagnostic page does); every 15 s the display state goes
+// to the console instead, so one photo shows whether a client opened the display and frames arrive. penang-fb-rounds=N rounds
+// (default 80: 20 minutes, the length of a penang-autoreset=1200 run; u27-lost1c's sampler stopped at round 40 while lsd still ran).
 // UniXNU's process stack sampler (BootProcessProbe.c / BootUiTraceProbe.c / BootProcessWorker.c, as on UniXNU-sheng): with
 // boot-ui-trace=1 it samples launchd's, backboardd's and SpringBoard's threads every 2 s; its STK rows (decoded by UniXNU
 // scripts/decode-boot-ui-trace.py, user addresses symbolized against the shared cache) are printed with the display state.
@@ -535,7 +536,8 @@ static void penangDisplayReport(void *,wait_result_t) {
     static char text[1600];
     static char rows[14][120];
     if(boot_process_start)boot_process_start();
-    for(unsigned round=1;round<=40;++round) {
+    unsigned rounds=80;PE_parse_boot_argn("penang-fb-rounds",&rounds,sizeof(rounds));
+    for(unsigned round=1;round<=rounds;++round) {
         IOSleep(15000);
         for(unsigned role=0;role<4 && boot_ui_trace_role_rows;++role) {
             unsigned n=boot_ui_trace_role_rows(role,rows,14,1);
