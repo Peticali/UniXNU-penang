@@ -541,17 +541,25 @@ extern "C" void native_ufs_stats_text(char *,size_t) __attribute__((weak_import)
 extern "C" uint64_t penang_pac_patched, penang_pac_emulated, penang_pac_unhandled, penang_pac_patch_failed;
 extern "C" int cpu_number(void);
 // The clock of the core running this round: 8 dependent adds per iteration (one cycle each on the A55 and the A76) against the
-// generic timer, interrupts off for the ~10 ms so the thread stays on one core. Rounds land on different cores over time.
+// generic timer. Interrupts are off only for each short burst (80k cycles: under 0.3 ms even at 300 MHz; the kernel panics past
+// 625 us with interrupts held off, which a single 8M-cycle run did in u27-smp5); the fastest of 8 bursts on one core is kept.
 static void penangCpuClock(int *cpu,uint64_t *mhz) {
-    const uint64_t iterations=1000000;uint64_t x=0,ns=0;
-    boolean_t enabled=ml_set_interrupts_enabled(FALSE);
-    *cpu=cpu_number();
-    const uint64_t start=mach_absolute_time();
-    for(uint64_t i=0;i<iterations;++i)
-        __asm__ volatile("add %0,%0,#1\n\tadd %0,%0,#1\n\tadd %0,%0,#1\n\tadd %0,%0,#1\n\t"
-                         "add %0,%0,#1\n\tadd %0,%0,#1\n\tadd %0,%0,#1\n\tadd %0,%0,#1":"+r"(x));
-    absolutetime_to_nanoseconds(mach_absolute_time()-start,&ns);
-    ml_set_interrupts_enabled(enabled);
+    const uint64_t iterations=10000;uint64_t best=UINT64_MAX,x=0;
+    *cpu=-1;*mhz=0;
+    for(unsigned burst=0;burst<8;++burst) {
+        boolean_t enabled=ml_set_interrupts_enabled(FALSE);
+        const int here=cpu_number();
+        const uint64_t start=mach_absolute_time();
+        for(uint64_t i=0;i<iterations;++i)
+            __asm__ volatile("add %0,%0,#1\n\tadd %0,%0,#1\n\tadd %0,%0,#1\n\tadd %0,%0,#1\n\t"
+                             "add %0,%0,#1\n\tadd %0,%0,#1\n\tadd %0,%0,#1\n\tadd %0,%0,#1":"+r"(x));
+        const uint64_t ticks=mach_absolute_time()-start;
+        ml_set_interrupts_enabled(enabled);
+        if(*cpu<0)*cpu=here;
+        if(here==*cpu && ticks<best)best=ticks;
+    }
+    uint64_t ns=0;
+    if(best!=UINT64_MAX)absolutetime_to_nanoseconds(best,&ns);
     *mhz=ns?iterations*8*1000/ns:0;
 }
 static void penangDisplayReport(void *,wait_result_t) {
