@@ -1,0 +1,22 @@
+--- a/scripts/xnu-panic-screen.c
++++ b/scripts/xnu-panic-screen.c
+@@ -303,11 +303,18 @@
+   if (mark[0] == 0xC0FFEE11u && mark[1] == 0x5CEEDA7Au) {
+     park ();   /* the first panic resets the board */
+   }
++  /* Claimed before drawing, not after: with eight cores the first panic's IPIs stop the others, and those that were already
++   * in a panic of their own (a nested assert such as pmap.c not_in_kdp) passed the check above while the first was still
++   * drawing and painted over it (penang u27-smp7/pac10: several panics overlapping in a fraction of a second). The clear
++   * below leaves the last row, which holds the marker. */
++  mark[0] = 0xC0FFEE11u;
++  mark[1] = 0x5CEEDA7Au;
++  __asm__ volatile ("dsb sy");
+   g.x = 0;
+   g.y = g.h / 8;
+   g.log = 0;
+   g.logn = 0;
+-  for (row = g.y; row < g.h; row++) {
++  for (row = g.y; row < g.h - 1; row++) {
+     for (col = 0; col < g.w; col++) {
+       *(volatile u32 *)(g.base + (u64)row * g.rb + (u64)col * 4) = 0;
+     }

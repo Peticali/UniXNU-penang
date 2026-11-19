@@ -562,6 +562,77 @@ static void penangCpuClock(int *cpu,uint64_t *mhz) {
     if(best!=UINT64_MAX)absolutetime_to_nanoseconds(best,&ns);
     *mhz=ns?iterations*8*1000/ns:0;
 }
+// CPU frequency (penang-cpufreq=<n>), from UniXNU-sheng package/CpuFreqProbe.cpp: the SM4350 has the same qcom-cpufreq-hw "epss"
+// block as the SM8550 (penang.dts qcom,cpufreq-hw compatible "qcom,cpufreq-hw-epss", qcom,skip-enable-check, 4-byte LUT rows,
+// at most 12 entries): domain 0 at 0x0fd91000 (cpus 0-5, Cortex-A55), domain 1 at 0x0fd92000 (cpus 6-7, Cortex-A76). The UEFI
+// sets only cluster 0 (1478.4 MHz); u27-pac10 measured cpu 6 at ~767 MHz, half the A55s. Registers as sheng's: reg_enable 0x0,
+// reg_domain_state 0x20 (running L value), reg_dcvs_ctrl 0xb0, reg_freq_lut 0x100, reg_perf_state 0x320 (+4*i per core with
+// dcvs_ctrl bit 0). LUT row: bits 31:30 source (0 = GPLL0/2, 300 MHz), 18:16 core count (1 = turbo), 7:0 L value x 19.2 MHz.
+//   1  read-only: each domain's enable bit, running MHz, requested level and its highest non-turbo LUT level
+//   3  request that highest non-turbo level in both domains once (no governor; the L3 is not touched)
+// penang-cpufreq-cap=<MHz> caps the requested level.
+namespace {
+constexpr uint64_t kPenangFreqBase[2] = {0x0fd91000, 0x0fd92000};
+constexpr unsigned kPenangFreqCpus[2] = {6, 2}, kPenangLutEntries = 12;
+constexpr uint32_t kFqEnable = 0x0, kFqState = 0x20, kFqDcvs = 0xb0, kFqLut = 0x100, kFqPerf = 0x320;
+struct PenangFreqDomain {IOMemoryMap *map; uintptr_t va; int voted; uint32_t votedKHz, preKHz;};
+PenangFreqDomain gPenangFreq[2];
+unsigned gPenangFreqMode, gPenangFreqCapKHz;
+bool gPenangFreqMapped;
+uint32_t penangFq(uintptr_t va, uint32_t reg) {return *reinterpret_cast<volatile uint32_t *>(va + reg);}
+void penangFqWrite(uintptr_t va, uint32_t reg, uint32_t value) {*reinterpret_cast<volatile uint32_t *>(va + reg) = value; __asm__ volatile("dsb sy" ::: "memory");}
+uint32_t penangLutKHz(uint32_t row) {return (row >> 30) ? 19200 * (row & 0xff) : 300000;}
+int penangPickLevel(uintptr_t va, uint32_t *khzOut, unsigned *rowsOut) {
+    int best = -1; uint32_t bestKHz = 0, prev = 0; unsigned rows = 0;
+    for (unsigned i = 0; i < kPenangLutEntries; ++i) {
+        const uint32_t row = penangFq(va, kFqLut + i * 4), khz = penangLutKHz(row);
+        if (i > 0 && khz == prev) break;
+        rows = i + 1; prev = khz;
+        if (((row >> 16) & 7) == 1) continue;                      // turbo
+        if (gPenangFreqCapKHz && khz > gPenangFreqCapKHz) continue;
+        if (khz >= bestKHz) {best = (int)i; bestKHz = khz;}
+    }
+    *khzOut = bestKHz; *rowsOut = rows;
+    return best;
+}
+}
+// Called every round: maps the windows once, votes (mode 3) once, and fills the row.
+static void penangCpuFreqPoll(char *out, size_t cap) {
+    out[0] = 0;
+    if (!gPenangFreqMapped) {
+        gPenangFreqMapped = true;
+        PE_parse_boot_argn("penang-cpufreq", &gPenangFreqMode, sizeof(gPenangFreqMode));
+        unsigned capMHz = 0; PE_parse_boot_argn("penang-cpufreq-cap", &capMHz, sizeof(capMHz)); gPenangFreqCapKHz = capMHz * 1000;
+        if (!gPenangFreqMode) return;
+        for (unsigned d = 0; d < 2; ++d) {
+            PenangFreqDomain &w = gPenangFreq[d];
+            IODeviceMemory *memory = IODeviceMemory::withRange(kPenangFreqBase[d], 0x1000);
+            w.map = memory ? memory->map(kIOMapAnywhere | kIOMapInhibitCache) : nullptr;
+            if (memory) memory->release();
+            w.va = w.map ? static_cast<uintptr_t>(w.map->getVirtualAddress()) : 0;
+            w.voted = -1;
+        }
+    }
+    if (!gPenangFreqMode) return;
+    unsigned n = (unsigned)snprintf(out, cap, "CPUFREQ m%u", gPenangFreqMode);
+    for (unsigned d = 0; d < 2 && n < cap; ++d) {
+        PenangFreqDomain &w = gPenangFreq[d];
+        if (!w.va) {n += (unsigned)snprintf(out + n, cap - n, " d%u:nomap", d); continue;}
+        uint32_t khz = 0; unsigned rows = 0;
+        const int level = penangPickLevel(w.va, &khz, &rows);
+        if (gPenangFreqMode >= 3 && w.voted < 0 && level >= 0) {
+            w.preKHz = (penangFq(w.va, kFqState) & 0xff) * 19200;
+            penangFqWrite(w.va, kFqPerf, (uint32_t)level);
+            if (penangFq(w.va, kFqDcvs) & 1)
+                for (unsigned c = 1; c < kPenangFreqCpus[d]; ++c) penangFqWrite(w.va, kFqPerf + c * 4, (uint32_t)level);
+            w.voted = level; w.votedKHz = khz;
+        }
+        const uint32_t running = (penangFq(w.va, kFqState) & 0xff) * 19200 / 1000;
+        n += (unsigned)snprintf(out + n, cap - n, " d%u:e%u run%u perf%u top%d@%u rows%u", d, penangFq(w.va, kFqEnable) & 1, running,
+                                penangFq(w.va, kFqPerf), level, khz / 1000, rows);
+        if (w.voted >= 0 && n < cap) n += (unsigned)snprintf(out + n, cap - n, " v%d pre%u", w.voted, w.preKHz / 1000);
+    }
+}
 static void penangDisplayReport(void *,wait_result_t) {
     static char text[1600];
     static char rows[14][120];
@@ -583,6 +654,7 @@ static void penangDisplayReport(void *,wait_result_t) {
         if(native_legacy_prepare_report(text,sizeof(text)))printf("penang-fb prepare: %s\n",text);
         if(native_legacy_clients_dump(text,sizeof(text)))printf("penang-fb clients: %s\n",text);
         if(native_ufs_stats_text){native_ufs_stats_text(text,sizeof(text));printf("%s\n",text);}
+        penangCpuFreqPoll(text,sizeof(text));if(text[0])printf("%s\n",text);
         {int cpu=-1;uint64_t mhz=0;penangCpuClock(&cpu,&mhz);
          printf("penang-cpu %u: cpu %d ~%llu MHz pac patched %llu emulated %llu header %llu stale %llu unhandled %llu failed %llu\n",
                 round,cpu,mhz,penang_pac_patched,penang_pac_emulated,penang_pac_header,penang_pac_stale,penang_pac_unhandled,
