@@ -633,10 +633,40 @@ static void penangCpuFreqPoll(char *out, size_t cap) {
         if (w.voted >= 0 && n < cap) n += (unsigned)snprintf(out + n, cap - n, " v%d pre%u", w.voted, w.preKHz / 1000);
     }
 }
+// The console ring on UFS (log=1): ShengUfs opens a write window at the end of userdata (the 32 MiB log reserve, clear of the root image
+// and Data: native_ufs_log_open). The ramoops ring the console and the panic screen append to (penang_pram_va, 0x40000 bytes from
+// 0xaf03f800) is copied to the window's first 64 blocks every round, and once more from the panic screen (penang_panic_log_flush,
+// called by the patched panic entry with UFS in its polled panic mode), then the device cache is flushed. A cold reset (PMIC, hardware
+// watchdog, a forced restart) keeps it, unlike the ring in DDR: tools/read-ufs-log.py reads it back from the UMS image.
+extern "C" int native_ufs_log_open(uint64_t *, uint64_t *, const char **);
+extern "C" int native_ufs_log_write(uint64_t, uint32_t, const void *);
+extern "C" int native_ufs_log_sync(void);
+extern "C" int native_ufs_log_panic(void);
+extern "C" volatile uint8_t *penang_pram_va;
+static volatile int gPenangLogOpen;   // 0 not tried, 1 open, -1 refused
+static volatile uint32_t gPenangLogWrites, gPenangLogFailures;
+static void penangLogFlush(void) {
+    if (gPenangLogOpen != 1 || !penang_pram_va) return;
+    if (native_ufs_log_write(0, 64, (const void *)penang_pram_va) && native_ufs_log_sync()) gPenangLogWrites = gPenangLogWrites + 1;
+    else gPenangLogFailures = gPenangLogFailures + 1;
+}
+extern "C" void penang_panic_log_flush(void);
+void penang_panic_log_flush(void) {
+    static volatile uint32_t once;
+    if (__atomic_exchange_n(&once, 1U, __ATOMIC_ACQ_REL)) return;
+    if (gPenangLogOpen == 1 && native_ufs_log_panic()) penangLogFlush();
+}
+static void penangLogOpen(void) {
+    uint64_t first = 0, blocks = 0;
+    const char *why = "";
+    gPenangLogOpen = native_ufs_log_open(&first, &blocks, &why) ? 1 : -1;
+    printf("penang-log: %s first %llu blocks %llu (%s)\n", gPenangLogOpen == 1 ? "open" : "refused", first, blocks, why);
+}
 static void penangDisplayReport(void *,wait_result_t) {
     static char text[1600];
     static char rows[14][120];
     if(boot_process_start)boot_process_start();
+    penangLogOpen();
     unsigned rounds=80;PE_parse_boot_argn("penang-fb-rounds",&rounds,sizeof(rounds));
     for(unsigned round=1;round<=rounds;++round) {
         IOSleep(15000);
@@ -655,6 +685,7 @@ static void penangDisplayReport(void *,wait_result_t) {
         if(native_legacy_clients_dump(text,sizeof(text)))printf("penang-fb clients: %s\n",text);
         if(native_ufs_stats_text){native_ufs_stats_text(text,sizeof(text));printf("%s\n",text);}
         penangCpuFreqPoll(text,sizeof(text));if(text[0])printf("%s\n",text);
+        penangLogFlush();
         {int cpu=-1;uint64_t mhz=0;penangCpuClock(&cpu,&mhz);
          printf("penang-cpu %u: cpu %d ~%llu MHz pac patched %llu emulated %llu header %llu stale %llu unhandled %llu failed %llu\n",
                 round,cpu,mhz,penang_pac_patched,penang_pac_emulated,penang_pac_header,penang_pac_stale,penang_pac_unhandled,

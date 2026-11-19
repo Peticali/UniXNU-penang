@@ -46,10 +46,13 @@ static const char lite_jobs[]=
  // Advice and statistics services with nothing to advise on here (untagged-3f2bd680: PerfPowerServices alone held 1.8 of 7 CPUs while it
  // wrote its power database, BackgroundShortcutRunner 0.3 to 0.5 all boot, duetexpertd 0.17 in Safari). Temporarily disabled to measure.
  "com.apple.PerfPowerServices,com.apple.PerfPowerServicesExtended,com.apple.perfpowermetricd,com.apple.siriinferenced,"
- "com.apple.siriknowledged,com.apple.siriactionsd,com.apple.duetexpertd,com.apple.modelcatalogd";
+ "com.apple.siriknowledged,com.apple.siriactionsd,com.apple.duetexpertd,com.apple.modelcatalogd,"
+ // UniXNU-asteroids 9f07af3 (iPadOS 27 on the Nothing Phone 3a): fairplayd.H2, fskitd and aonsensed respawned every 10 s; bluetoothd
+ // has no radio stack here (penang pac10: aonsensed was launching when the board panicked).
+ "com.apple.fairplayd.H2,com.apple.filesystems.fskitd,com.apple.aonsensed,com.apple.bluetoothd";
 // penang: sheng's PE_builtin_boot_args is left out (this kernel's pexpert has no built-in argument reader); the board puts
 // disable-watchdogd=1 lite=1 and the scheduler hygiene switches on the command line instead.
-static char policy[2048],jobs[200],enable_jobs[200];
+static char policy[4096]   /* asteroids: the lite list outgrew 2048 */,jobs[200],enable_jobs[200];
 volatile int sheng_watchdog_policy_status=-1;
 
 // setup=1 or data-reset=2 (the install entry's "show Hello" choice): remove Setup's completion flags once, so this boot shows the Hello page.

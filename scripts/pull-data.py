@@ -8,7 +8,8 @@ The phone runs ums/out/penang-ums-auto.img (tools/uefi-run.sh boots it after eac
 (serial penang-ums, the 112 GiB one). NativeRamBlock's store window (PersistOverlay.h: "SHNGDATA" header, bitmap, pages) lies
 at the end of userdata, below the 1 GiB log reserve (ShengUfs native_ufs_store_open). Seed pages + overlay pages = Data, a sparse
 raw APFS image in OUT/data.raw; with --mount it is mounted read-only with apfs-fuse at OUT/m and launchd's logs are copied to OUT.
-It survives the PMIC cold reset that wipes the ramoops ring. Reads only; needs no root (the UMS disk belongs to the user).
+It survives the PMIC cold reset that wipes the ramoops ring. With log=1 the console ring the board copies to the UFS log window
+(every round and from the panic screen) goes to OUT/ufs-ring.txt too. Reads only; needs no root (the UMS disk belongs to the user).
 """
 import argparse
 import shutil
@@ -31,6 +32,27 @@ def ums_disk():
     sys.exit('no penang-ums userdata disk: boot ums/out/penang-ums-auto.img first')
 
 
+LOG_RESERVE_BLOCKS = 8192              # ShengUfs kLogReserveBlocks: the log window, the last 32 MiB of userdata (log=1)
+RING_BYTES = 0x40000                   # penang_pram_va: {u32 "DBGC", u32 start, u32 size} then the ring
+
+
+def dump_ufs_ring(dev, out):
+    """The console ring the board copies to the UFS log window every round and from the panic screen (log=1): OUT/ufs-ring.txt."""
+    first = USERDATA_BYTES // 4096 - LOG_RESERVE_BLOCKS
+    with open(dev, 'rb') as disk:
+        disk.seek(first * 4096)
+        ring = disk.read(RING_BYTES)
+    sig, start, size = struct.unpack_from('<III', ring, 0)
+    data = ring[12:]
+    if sig != 0x43474244 or start >= len(data) or size > len(data):
+        print(f'no console ring in the UFS log window (block {first}; boot with log=1)')
+        return
+    text = data[start:size] + data[:start] if size == len(data) else data[:size]
+    path = out / 'ufs-ring.txt'
+    path.write_bytes(text)
+    print(f'UFS console ring: {len(text)} bytes -> {path}')
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument('--dev')
@@ -46,6 +68,7 @@ def main():
     first = USERDATA_BYTES // 4096 - RESERVE_BLOCKS - (1 + bitmap_blocks + pages)
     dev = args.dev or ums_disk()
     args.out.mkdir(parents=True, exist_ok=True)
+    dump_ufs_ring(dev, args.out)
     mnt = args.out / 'm'
     subprocess.run(['fusermount3', '-u', str(mnt)], capture_output=True)
     with open(dev, 'rb') as disk:

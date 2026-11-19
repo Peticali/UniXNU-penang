@@ -1,0 +1,29 @@
+--- a/scripts/patch-xnu-entry-probe.py
++++ b/scripts/patch-xnu-entry-probe.py
+@@ -214,6 +214,13 @@
+         if pram % 8 or not any(base <= pram and pram + 8 <= base + size for base, size, _, _ in SEGMENTS):
+             raise SystemExit('Invalid _penang_pram_va')
+         definitions.append(f'-DPRAM_SLOT={pram:#x}UL')
++    # Optional: the board's flush of its console ring to storage (penang penang_panic_log_flush, the UFS log window), called once the
++    # screen is drawn and before the reset, so a panic is kept even when the board comes back through a cold reset.
++    flush = symbols.get('_penang_panic_log_flush')
++    if flush is not None:
++        if flush % 4 or not any(base <= flush < base + size for base, size, _, _ in SEGMENTS):
++            raise SystemExit('Invalid _penang_panic_log_flush')
++        definitions.append(f'-DPANIC_FLUSH={flush:#x}UL')
+     if PANIC_RESET:
+         definitions.append(f'-DPANIC_RESET_SECONDS={PANIC_RESET}')
+     subprocess.run([clang, '--target=aarch64-none-elf', '-ffreestanding', '-fno-builtin', '-fno-stack-protector',
+--- a/scripts/xnu-panic-screen.c
++++ b/scripts/xnu-panic-screen.c
+@@ -366,6 +366,10 @@
+   }
+ #endif
+   __asm__ volatile ("dsb sy");
++#ifdef PANIC_FLUSH
++  /* The board copies the console ring, now holding this panic's text, to storage (penang: the UFS log window, polled). */
++  ((void (*) (void))PANIC_FLUSH) ();
++#endif
+ #if PANIC_RESET_SECONDS
+   reset_after (PANIC_RESET_SECONDS);
+ #endif

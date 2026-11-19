@@ -22,6 +22,7 @@ apply "$here/patches/unixnu/0010-armcpu-virtual-timer-ppi.patch" "$unixnu/driver
 apply "$here/patches/unixnu/0011-devicetree-virtual-timer-ppi.patch" "$unixnu"
 apply "$here/patches/unixnu/0012-panic-screen-persistent-ring-and-reset.patch" "$unixnu"
 apply "$here/patches/unixnu/0013-panic-screen-claim-before-drawing.patch" "$unixnu"
+apply "$here/patches/unixnu/0014-panic-screen-flush-to-storage.patch" "$unixnu"
 if [ "${WITH_GPU:-0}" = 1 ]; then
 	git -C "$unixnu" submodule update --init drivers/AdrenoMetal >/dev/null
 	apply "$here/patches/unixnu/0006-adrenometal-penang-gpu-wip.patch" "$unixnu/drivers/AdrenoMetal"
