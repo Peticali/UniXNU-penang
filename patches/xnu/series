@@ -6,6 +6,8 @@ arch:../../../patches/xnu-12377/darwin26-shared-region.patch
 # From UniXNU-sheng (via UniXNU-uke): the stack shift the iPadOS 27 reviewed sites bind
 native-4k-stack-shift.patch
 # penang:
+# Reset vector cpu_data match by Aff1:Aff0 (SM4350 cores are numbered in Affinity 1), as sm8550-common's native-smp-secondary.
+penang-smp-reset-affinity.patch
 nopac-fileset-unmapped-strip.patch
 nopac-arm64-kernel-ldflags.patch
 upstream-clang-ptrauth-3args.patch

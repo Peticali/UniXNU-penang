@@ -1,0 +1,21 @@
+penang: the reset vector finds a core's cpu_data by MPIDR Aff1:Aff0, as UniXNU-sm8550-common's native-smp-secondary.patch does
+for SM8550. The SM4350's Kryo cores (DynamIQ) number cores in Affinity 1 (MPIDR 0x81000X00, ADT /cpus reg 0x0..0x700) with
+Affinity 0 always 0, so the BCM2837 build's "MPIDR & 0xFF" matched every secondary core to the boot core's cpu_data (phys_id 0):
+CPU_ON brought each one up through BootCpuData's reset handler (resume_idle_cpu) as a second CPU 0. The ~38 s early panics under
+smp=1 (u27-smp1, dp1, ufs1, ufs2, lsd1, lost1, lost1b, long1, long4, long4b, long4c, smp4) were cores loading another core's idle
+context: instruction fetch aborts at pc 0 and at kdebug_enable, cpu.c:265 assert(cdp) from cpu_idle_exit(from_reset), and the
+panic screen then overflowing its stack.
+
+--- a/osfmk/arm64/start.s
++++ b/osfmk/arm64/start.s
+@@ -145,8 +145,8 @@
+ 	adrp	x19, EXT(ResetHandlerData)@page			// Get address of the reset handler data
+ 	add		x19, x19, EXT(ResetHandlerData)@pageoff
+ 	mrs		x15, MPIDR_EL1						// Load MPIDR to get CPU number
+-#if HAS_CLUSTER
+-	and		x0, x15, #0xFFFF					// CPU number in Affinity0, cluster ID in Affinity1
++#if HAS_CLUSTER || defined(BCM2837)
++	and		x0, x15, #0xFFFF					// CPU number in Affinity0, cluster ID in Affinity1 (SM4350 numbers cores in Affinity1)
+ #else
+ 	and		x0, x15, #0xFF						// CPU number is in MPIDR Affinity Level 0
+ #endif
