@@ -1,0 +1,41 @@
+penang: tolerate code-signing taint (the runtime PAC rewrite taints the pages it changes); penang-cs-taint=0 restores the violation.
+
+--- a/osfmk/vm/vm_fault.c
++++ b/osfmk/vm/vm_fault.c
+@@ -2782,6 +2782,27 @@
+ /*
+  * Check if the page being entered into the pmap violates code signing.
+  */
++/*
++ * penang: arm64e user code runs on a CPU without FEAT_PAuth because the user PAC trap rewrites its PAC instructions in the
++ * file's own pages (penang-user-pac-trap-and-patch.patch). A rewritten page no longer matches its code signature, so the next
++ * validation of it (a new mapping: libobjc-trampolines.dylib's trampoline page is remapped for every block IMP; a later fault on
++ * a 16 KiB sub-page) marks it tainted, and a tainted page was a violation: "CODE SIGNING: rejecting invalid page ... in file
++ * /usr/lib/libobjc-trampolines.dylib (tainted:1)" killed SpringBoard, liveactivitiesd, routined and every other block user once
++ * SpringBoard reached applicationDidFinishLaunching (u27-aks3b). A tainted page is tolerated here (it still maps, still counts as
++ * tainted). Boot-arg penang-cs-taint=0 restores the violation.
++ */
++static bool
++penang_cs_taint_tolerated(void)
++{
++	static int tolerated = -1;
++	if (tolerated < 0) {
++		unsigned value = 1;
++		PE_parse_boot_argn("penang-cs-taint", &value, sizeof(value));
++		tolerated = value != 0;
++	}
++	return tolerated == 1;
++}
++
+ static kern_return_t
+ vm_fault_cs_check_violation(
+ 	bool cs_bypass,
+@@ -2888,7 +2909,7 @@
+ 		*cs_violation = FALSE;
+ 	} else if (VMP_CS_TAINTED(m, fault_page_size, fault_phys_offset)) {
+ 		/* tainted page */
+-		*cs_violation = TRUE;
++		*cs_violation = !penang_cs_taint_tolerated();
+ 	} else if (!cs_enforcement_enabled) {
+ 		/* no further code-signing enforcement */
+ 		*cs_violation = FALSE;
