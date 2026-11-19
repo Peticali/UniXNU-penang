@@ -1,0 +1,20 @@
+penang: call the board's launchd job policy (package/BootWatchdogPolicy.c, UniXNU-sheng's) after the Data mount, before launchd starts.
+
+--- a/bsd/kern/kern_exec.c
++++ b/bsd/kern/kern_exec.c
+@@ -9175,6 +9175,15 @@
+ #if defined(XNU_OWNER_DATA_MOUNT) && XNU_OWNER_DATA_MOUNT
+ 	int data_error = native_owner_data_prepare(p, (user_addr_t)scratch_addr);
+ 	if (data_error) panic("offline scratch Data mount failed: %d", data_error);
++	{
++		/* penang: the board's launchd job policy (package/BootWatchdogPolicy.c, from UniXNU-sheng) writes launchd's disabled.plist on
++		 * the Data volume just mounted (disable-watchdogd=1, lite=1, disable-jobs=, enable-jobs=). A failure only loses the policy. */
++		extern int sheng_boot_watchdog_policy(void *, uint64_t) __attribute__((weak_import));
++		if (sheng_boot_watchdog_policy) {
++			int policy_error = sheng_boot_watchdog_policy(p, (uint64_t)scratch_addr);
++			if (policy_error) printf("penang launchd job policy failed: %d (continuing)\n", policy_error);
++		}
++	}
+ #endif
+ #if CONFIG_MEMORYSTATUS
+ 	(void) memorystatus_init_at_boot_snapshot();
