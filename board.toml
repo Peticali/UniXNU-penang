@@ -9,7 +9,7 @@ description = "Motorola moto g53 5G (XT2335, SM4350 holi): iOS 26 without PAC"
 kit = "penang"
 
 [components]
-include = ["ArmDTPlatform", "ArmCpu", "SoftwareAES", "XnuPrelink", "DarwinBoot", "ShengUfs", "RamBlock", "GopFramebuffer"]
+include = ["ArmDTPlatform", "ArmCpu", "SoftwareAES", "XnuPrelink", "DarwinBoot", "ShengUfs", "RamBlock", "GopFramebuffer", "AppleKeyStoreState"]
 # ShengUfs (feeds.toml: the penang fork) publishes the root IOMedia; RamBlock is the Data-disk class the source-storage
 # runtime registers third (build-sheng-source-storage.py compiles it unconditionally), as on UniXNU-sheng.
 
@@ -37,6 +37,8 @@ archives = [
   "component:ShengUfs",
   "build-sheng-source-storage.py --policy-dir scripts/policies/ipados-27.0.1-24A446",
   "component:RamBlock",
+  # The owned AppleKeyStore (aks=1): UniXNU AppleKeyStoreState, its probe linked by the display build below (as UniXNU-sheng).
+  "component:AppleKeyStoreState",
   # The GOP display (UniXNU GopFramebuffer bound to the original IOMobileFramebufferLegacy of 24A446): scripts/build-penang-legacy-display.py.
   "build-penang-legacy-display.py",
   "/mnt/nvme/xnu-build/unixnu/UniXNU-penang/scripts/build-reference-lto.py --tree .",

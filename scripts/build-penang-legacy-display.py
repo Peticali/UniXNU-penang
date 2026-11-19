@@ -412,6 +412,14 @@ compile_cpp(penang, OUT / 'LegacyDisplayPenang.o')
 # The backlight service (kits/penang/PenangBacklight.cpp): its class constructor runs from the display probe, as the display's do.
 backlight_source = ROOT / 'kits/penang/PenangBacklight.cpp'
 compile_cpp(backlight_source, OUT / 'PenangBacklight.o')
+# The keystore state service (UniXNU AppleKeyStoreState, aks=1) and sheng's probe for it (kits/penang/KeyStoreProbe.cpp), as UniXNU-sheng's
+# build-gop-legacy-display-27.py links them: the driver's static constructor runs from the probe.
+compile_cpp(ROOT / 'kits/penang/KeyStoreProbe.cpp', OUT / 'KeyStoreProbe.o')
+print(run(['python3', ROOT / 'scripts/build-arm-driver.py', 'NativeKeyStoreEvents'], text=True), end='')
+keyevents = ROOT / 'build/apple-key-store-state'
+keyevents_late = keyevents / 'NativeKeyStoreEvents.late.o'
+run([llvm / 'llvm-objcopy', '--remove-section=__DATA,__mod_init_func', '--globalize-symbol=__GLOBAL__sub_I_NativeKeyStoreEvents.cpp',
+     keyevents / 'NativeKeyStoreEvents.o', keyevents_late])
 backlight_late = OUT / 'PenangBacklight.late.o'
 run([llvm / 'llvm-objcopy', '--remove-section=__DATA,__mod_init_func', '--globalize-symbol=__GLOBAL__sub_I_PenangBacklight.cpp',
      OUT / 'PenangBacklight.o', backlight_late])
@@ -424,7 +432,7 @@ run([llvm / 'llvm-objcopy', '--remove-section=__DATA,__mod_init_func', '--global
 archive = OUT / 'libNativeLegacyDisplay.late.a'
 archive.unlink(missing_ok=True)
 run(['xcrun', 'ar', 'rcs', archive, late, OUT / 'original-bindings.o', OUT / 'original-addresses.o', OUT / 'LegacyDisplayProbe.o',
-     OUT / 'LegacyDisplaySupport27.o', OUT / 'LegacyDisplayPenang.o', backlight_late, gop_late])
+     OUT / 'LegacyDisplaySupport27.o', OUT / 'LegacyDisplayPenang.o', backlight_late, gop_late, OUT / 'KeyStoreProbe.o', keyevents_late])
 sources = [ROOT / 'drivers/GopFramebuffer/NativeLegacyDisplay.cpp', ROOT / 'drivers/GopFramebuffer/NativeLegacyRequest.h',
            ROOT / 'drivers/GopFramebuffer/NativeGOPPresenter.cpp', ROOT / 'drivers/GopFramebuffer/NativeGOPWire.h',
            ROOT / 'drivers/GopFramebuffer/NativeHalfCodes.h', source, backlight_source, ROOT / 'scripts' / ABI_PATH.name]

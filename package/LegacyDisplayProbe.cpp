@@ -661,8 +661,11 @@ static void penangDisplayReport(void *,wait_result_t) {
                 penang_pac_patch_failed);}
     }
 }
+// The owned AppleKeyStore (KeyStoreProbe.cpp, aks=1 offline-key-events=1) before launchd: keybagd, containermanagerd and lsd ask it.
+extern "C" void native_keystore_probe(void);
 void native_legacy_display_late_probe(void);
 void native_legacy_display_late_probe(void) {
+    native_keystore_probe();
     {thread_t thread=nullptr;if(kernel_thread_start(penangDisplayReport,nullptr,&thread)==KERN_SUCCESS)thread_deallocate(thread);}
     {unsigned backlight=0;if(PE_parse_boot_argn("backlight",&backlight,sizeof(backlight)) && backlight==1)penang_backlight_start();}
     IOService *display=pendingLegacyDisplay;if(!display){native_legacy_display_checkpoint();return;}pendingLegacyDisplay=nullptr;
