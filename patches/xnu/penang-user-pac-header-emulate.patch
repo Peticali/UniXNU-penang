@@ -1,6 +1,6 @@
---- a/osfmk/arm64/sleh.c	2026-11-18 18:41:00.513297134 -0300
-+++ b/osfmk/arm64/sleh.c	2026-11-18 18:41:00.523308493 -0300
-@@ -1272,6 +1272,55 @@
+--- a/osfmk/arm64/sleh.c
++++ b/osfmk/arm64/sleh.c
+@@ -1304,6 +1304,61 @@
  	}
  }
  
@@ -23,6 +23,12 @@
 +			return false;
 +		}
 +		if (head[0] == 0xfeedfacfU) {
++			/* Only an executable (MH_EXECUTE) or dyld (MH_DYLINKER) is checked again by exec. Every dylib of the shared cache
++			 * also begins with a header: with those included, page 0 of each cached library trapped on every execution of
++			 * every PAC instruction (u27-smp7: 7.4 M emulations in 2 min). */
++			if (head[3] != 2U && head[3] != 7U) {
++				return false;
++			}
 +			uint64_t end = (base + 32 + head[5] + 0xfffULL) & ~0xfffULL;
 +			return pc < end;
 +		}
@@ -56,14 +62,14 @@
  static bool
  penang_pac_user_trap(arm_saved_state_t *state, uint32_t instr)
  {
-@@ -1281,7 +1330,12 @@
+@@ -1322,7 +1377,12 @@
  	arm_saved_state64_t *ss = saved_state64(state);
  	uint64_t pc = ss->pc;
  	uint32_t replacement = penang_pac_rewrite(instr);
 -	if (replacement != 0) {
 +	const bool header = replacement != 0 && penang_pac_in_header_pages(pc);
 +	if (header && penang_pac_emulate(ss, replacement)) {
-+		__atomic_fetch_add(&penang_pac_emulated, 1, __ATOMIC_RELAXED);
++		__atomic_fetch_add(&penang_pac_header, 1, __ATOMIC_RELAXED);
 +		return true;
 +	}
 +	if (replacement != 0 && !header) {

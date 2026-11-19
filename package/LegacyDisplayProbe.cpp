@@ -538,7 +538,7 @@ extern "C" void native_ufs_stats_text(char *,size_t) __attribute__((weak_import)
 // The user PAC trap-and-patch counters (patches/xnu/penang-user-pac-trap-and-patch.patch): instructions rewritten in place, LDRAA/LDRAB
 // emulated on every execution, left as EXC_BAD_INSTRUCTION, and rewrites that failed. A fast-growing emulated count is a trap per
 // execution in hot user code.
-extern "C" uint64_t penang_pac_patched, penang_pac_emulated, penang_pac_unhandled, penang_pac_patch_failed;
+extern "C" uint64_t penang_pac_patched, penang_pac_emulated, penang_pac_unhandled, penang_pac_patch_failed, penang_pac_stale, penang_pac_header;
 extern "C" int cpu_number(void);
 // The clock of the core running this round: 8 dependent adds per iteration (one cycle each on the A55 and the A76) against the
 // generic timer. Interrupts are off only for each short burst (80k cycles: under 0.3 ms even at 300 MHz; the kernel panics past
@@ -584,8 +584,9 @@ static void penangDisplayReport(void *,wait_result_t) {
         if(native_legacy_clients_dump(text,sizeof(text)))printf("penang-fb clients: %s\n",text);
         if(native_ufs_stats_text){native_ufs_stats_text(text,sizeof(text));printf("%s\n",text);}
         {int cpu=-1;uint64_t mhz=0;penangCpuClock(&cpu,&mhz);
-         printf("penang-cpu %u: cpu %d ~%llu MHz pac patched %llu emulated %llu unhandled %llu failed %llu\n",round,cpu,mhz,
-                penang_pac_patched,penang_pac_emulated,penang_pac_unhandled,penang_pac_patch_failed);}
+         printf("penang-cpu %u: cpu %d ~%llu MHz pac patched %llu emulated %llu header %llu stale %llu unhandled %llu failed %llu\n",
+                round,cpu,mhz,penang_pac_patched,penang_pac_emulated,penang_pac_header,penang_pac_stale,penang_pac_unhandled,
+                penang_pac_patch_failed);}
     }
 }
 void native_legacy_display_late_probe(void);

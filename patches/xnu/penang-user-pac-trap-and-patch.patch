@@ -1,6 +1,6 @@
---- a/osfmk/arm64/sleh.c	2026-11-18 11:21:43.147956524 -0300
-+++ b/osfmk/arm64/sleh.c	2026-11-18 11:22:03.033791979 -0300
-@@ -1181,6 +1181,141 @@
+--- a/osfmk/arm64/sleh.c
++++ b/osfmk/arm64/sleh.c
+@@ -1181,6 +1181,182 @@
   * Uncategorized exceptions are a catch-all for general execution errors.
   * ARM64_TODO: For now, we assume this is for undefined instruction exceptions.
   */
@@ -18,7 +18,10 @@
 + * Anything else stays EXC_BAD_INSTRUCTION; the first ones are logged with their pid and pc.
 + */
 +extern int proc_selfpid(void);
-+extern uint64_t penang_pac_patched, penang_pac_emulated, penang_pac_unhandled, penang_pac_patch_failed; uint64_t penang_pac_patched, penang_pac_emulated, penang_pac_unhandled, penang_pac_patch_failed;   /* read by the penang-fb rounds */
++/* Read by the penang-fb rounds: rewritten in place, LDRAA/LDRAB emulated, left as EXC_BAD_INSTRUCTION, failed rewrites, traps on a
++ * word another core had already rewritten (re-run), and header-page instructions emulated (penang-user-pac-header-emulate). */
++extern uint64_t penang_pac_patched, penang_pac_emulated, penang_pac_unhandled, penang_pac_patch_failed, penang_pac_stale, penang_pac_header;
++uint64_t penang_pac_patched, penang_pac_emulated, penang_pac_unhandled, penang_pac_patch_failed, penang_pac_stale, penang_pac_header;
 +
 +static uint32_t
 +penang_pac_rewrite(uint32_t i)
@@ -45,11 +48,40 @@
 +	if ((i & 0xffe0fc00U) == 0x9ac03000U) {
 +		return 0xaa1f03e0U | (i & 31U);                         /* pacga Xd, Xn, Xm -> mov Xd, xzr */
 +	}
-+	if ((i & 0xff200c00U) == 0xf8200400U && !(i & (1U << 22))) {
-+		/* ldraa/ldrab Xt, [Xn, #imm9 << 3] (S = 0, no writeback) -> ldr Xt, [Xn, #imm9 << 3] */
-+		return 0xf9400000U | (((i >> 12) & 0x1ffU) << 10) | (i & 0x3ffU);
++	if ((i & 0xff200400U) == 0xf8200400U) {
++		/* ldraa/ldrab Xt, [Xn|SP, #simm10 << 3]{!} */
++		uint32_t rt = i & 31U;
++		int32_t offset = (int32_t)(((i >> 12) & 0x1ffU) | ((i >> 22) & 1U) << 9);
++		if (offset & 0x200) {
++			offset -= 0x400;
++		}
++		offset *= 8;
++		const bool writeback = (i >> 11) & 1U;
++		if (!writeback && offset >= 0) {
++			return 0xf9400000U | ((uint32_t)(offset / 8) << 10) | (rn << 5) | rt;   /* ldr Xt, [Xn, #offset] */
++		}
++		/* u27-smp7: 7.4 M emulations in 2 min. The negative and writeback forms within the unscaled 9-bit range have ARMv8.0
++		 * equivalents too: ldur Xt, [Xn, #simm9] and the pre-indexed ldr Xt, [Xn, #simm9]! (Rt == Rn with writeback is
++		 * CONSTRAINED UNPREDICTABLE for both, so it stays emulated). */
++		if (offset >= -256 && offset <= 255) {
++			if (!writeback) {
++				return 0xf8400000U | (((uint32_t)offset & 0x1ffU) << 12) | (rn << 5) | rt;
++			}
++			if (rt != rn) {
++				return 0xf8400c00U | (((uint32_t)offset & 0x1ffU) << 12) | (rn << 5) | rt;
++			}
++		}
 +	}
 +	return 0;
++}
++
++/* The ARMv8.0 words penang_pac_rewrite produces: ret, br/blr Xn, nop, mov Xd, xzr, and the ldr/ldur/pre-indexed ldr loads. */
++static bool
++penang_pac_rewritten(uint32_t i)
++{
++	return i == 0xd65f03c0U || (i & 0xfffffc1fU) == 0xd61f0000U || (i & 0xfffffc1fU) == 0xd63f0000U || i == 0xd503201fU ||
++	       (i & 0xffffffe0U) == 0xaa1f03e0U || (i & 0xffc00000U) == 0xf9400000U || (i & 0xffe00c00U) == 0xf8400000U ||
++	       (i & 0xffe00c00U) == 0xf8400c00U;
 +}
 +
 +static bool
@@ -101,6 +133,15 @@
 +	if (!is_saved_state64(state) || !PSR64_IS_USER64(get_saved_state_cpsr(state))) {
 +		return false;
 +	}
++	if (penang_pac_rewritten(instr)) {
++		/* The word at pc is already a rewrite: another core replaced it between this core's fetch of the PAC instruction and
++		 * the read of it here (u27-smp7 with eight cores: "unhandled" ret and nop, then SIGILL). Drop this core's stale
++		 * instruction cache line and run the new word. */
++		uint64_t stale = get_saved_state_pc(state);
++		__asm__ volatile ("ic ivau, %0\n\tdsb ish\n\tisb" :: "r"(stale) : "memory");
++		__atomic_fetch_add(&penang_pac_stale, 1, __ATOMIC_RELAXED);
++		return true;
++	}
 +	arm_saved_state64_t *ss = saved_state64(state);
 +	uint64_t pc = ss->pc;
 +	uint32_t replacement = penang_pac_rewrite(instr);
@@ -142,7 +183,7 @@
  static void
  handle_uncategorized(arm_saved_state_t *state)
  {
-@@ -1254,6 +1389,10 @@
+@@ -1254,6 +1430,10 @@
  		}
  	}
  
