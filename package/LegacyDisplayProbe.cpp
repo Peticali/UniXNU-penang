@@ -532,6 +532,28 @@ void native_legacy_display_probe(void) {
 // scripts/decode-boot-ui-trace.py, user addresses symbolized against the shared cache) are printed with the display state.
 extern "C" void boot_process_start(void) __attribute__((weak_import));
 extern "C" unsigned boot_ui_trace_role_rows(unsigned,char rows[][120],unsigned,unsigned) __attribute__((weak_import));
+// ShengUfs' statistics row (commands, wait times, IRQ wakes, root window requests/MiB/ms): with it each round shows the storage rate
+// while lsd rebuilds the LaunchServices database (UniXNU e5: a ~3 GiB scan that only finished once storage reached ~17 MB/s).
+extern "C" void native_ufs_stats_text(char *,size_t) __attribute__((weak_import));
+// The user PAC trap-and-patch counters (patches/xnu/penang-user-pac-trap-and-patch.patch): instructions rewritten in place, LDRAA/LDRAB
+// emulated on every execution, left as EXC_BAD_INSTRUCTION, and rewrites that failed. A fast-growing emulated count is a trap per
+// execution in hot user code.
+extern "C" uint64_t penang_pac_patched, penang_pac_emulated, penang_pac_unhandled, penang_pac_patch_failed;
+extern "C" int cpu_number(void);
+// The clock of the core running this round: 8 dependent adds per iteration (one cycle each on the A55 and the A76) against the
+// generic timer, interrupts off for the ~10 ms so the thread stays on one core. Rounds land on different cores over time.
+static void penangCpuClock(int *cpu,uint64_t *mhz) {
+    const uint64_t iterations=1000000;uint64_t x=0,ns=0;
+    boolean_t enabled=ml_set_interrupts_enabled(FALSE);
+    *cpu=cpu_number();
+    const uint64_t start=mach_absolute_time();
+    for(uint64_t i=0;i<iterations;++i)
+        __asm__ volatile("add %0,%0,#1\n\tadd %0,%0,#1\n\tadd %0,%0,#1\n\tadd %0,%0,#1\n\t"
+                         "add %0,%0,#1\n\tadd %0,%0,#1\n\tadd %0,%0,#1\n\tadd %0,%0,#1":"+r"(x));
+    absolutetime_to_nanoseconds(mach_absolute_time()-start,&ns);
+    ml_set_interrupts_enabled(enabled);
+    *mhz=ns?iterations*8*1000/ns:0;
+}
 static void penangDisplayReport(void *,wait_result_t) {
     static char text[1600];
     static char rows[14][120];
@@ -552,6 +574,10 @@ static void penangDisplayReport(void *,wait_result_t) {
                penang_backlight_stats[0],penang_backlight_stats[1],penang_backlight_stats[2]);
         if(native_legacy_prepare_report(text,sizeof(text)))printf("penang-fb prepare: %s\n",text);
         if(native_legacy_clients_dump(text,sizeof(text)))printf("penang-fb clients: %s\n",text);
+        if(native_ufs_stats_text){native_ufs_stats_text(text,sizeof(text));printf("%s\n",text);}
+        {int cpu=-1;uint64_t mhz=0;penangCpuClock(&cpu,&mhz);
+         printf("penang-cpu %u: cpu %d ~%llu MHz pac patched %llu emulated %llu unhandled %llu failed %llu\n",round,cpu,mhz,
+                penang_pac_patched,penang_pac_emulated,penang_pac_unhandled,penang_pac_patch_failed);}
     }
 }
 void native_legacy_display_late_probe(void);

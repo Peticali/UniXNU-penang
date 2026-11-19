@@ -18,7 +18,7 @@
 + * Anything else stays EXC_BAD_INSTRUCTION; the first ones are logged with their pid and pc.
 + */
 +extern int proc_selfpid(void);
-+static uint64_t penang_pac_patched, penang_pac_emulated, penang_pac_unhandled, penang_pac_patch_failed;
++extern uint64_t penang_pac_patched, penang_pac_emulated, penang_pac_unhandled, penang_pac_patch_failed; uint64_t penang_pac_patched, penang_pac_emulated, penang_pac_unhandled, penang_pac_patch_failed;   /* read by the penang-fb rounds */
 +
 +static uint32_t
 +penang_pac_rewrite(uint32_t i)
