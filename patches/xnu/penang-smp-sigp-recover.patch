@@ -1,0 +1,158 @@
+From UniXNU-sheng patches/xnu-12377: the cpu_common.c and osfmk/arm64/cpu.c hunks of zzzz-sheng-ipados27-bringup.patch and
+zzzzzzzzzz-sheng-sigp-reinit-assert.patch (SMP under a hypervisor, off Apple silicon).
+- A started core whose SIGPdisabled is still set (it missed the start-up self-IPI that clears it) refused every IPI: cpu_signal
+  returned KERN_FAILURE, so a thread woken on that core waited for its next interrupt, and the core spun in its idle thread.
+  sheng_sigp_recover clears the flag for a core in InitState|StartedState, from the sender and from cpu_idle. penang u27-cm1:
+  UFS waiters woken up to 1.04 s after their completion interrupt (stats wakes max=1044032us) while lsd crawled through
+  bundle registration one open()/getattrlist() at a time.
+- cpu_start writes ResetHandlerData, const_boot_args and cpu_ttep back to the point of coherency for the new core, which reads
+  them with its MMU off.
+diff --color -ru a/osfmk/arm/cpu_common.c b/osfmk/arm/cpu_common.c
+--- a/osfmk/arm/cpu_common.c	2026-11-19 04:09:01.661529890 -0300
++++ b/osfmk/arm/cpu_common.c	2026-11-19 04:09:01.673253684 -0300
+@@ -409,6 +409,21 @@
+ 	return cpu_xcall_internal(SIGPxcallImm, cpu_number, func, param);
+ }
+ 
++/* sheng (UniXNU): a started core whose SIGPdisabled is still set lost the self-IPI that should have cleared it (seen as random early hangs
++ * and UFS root failures under SMP: the I/O thread's wakeup IPI to that core was silently dropped). A core in InitState|StartedState runs and
++ * takes interrupts, so the flag is cleared here and the signal sent. Counted in sheng_sigp_recovered. */
++volatile uint32_t sheng_sigp_recovered;
++bool
++sheng_sigp_recover(cpu_data_t *target_proc)
++{
++	if ((os_atomic_load(&target_proc->cpu_flags, relaxed) & (InitState | StartedState)) != (InitState | StartedState)) {
++		return false;
++	}
++	os_atomic_andnot(&target_proc->cpu_signal, SIGPdisabled, acq_rel);
++	os_atomic_inc(&sheng_sigp_recovered, relaxed);
++	return true;
++}
++
+ static kern_return_t
+ cpu_signal_internal(cpu_data_t *target_proc,
+     cpu_signal_t signal,
+@@ -438,6 +453,9 @@
+ 
+ 		do {
+ 			current_signals = target_proc->cpu_signal;
++			if ((current_signals & SIGPdisabled) == SIGPdisabled && sheng_sigp_recover(target_proc)) {
++				current_signals = target_proc->cpu_signal;
++			}
+ 			if ((current_signals & SIGPdisabled) == SIGPdisabled) {
+ 				ml_set_interrupts_enabled(interruptible);
+ 				return KERN_FAILURE;
+@@ -481,6 +499,9 @@
+ 	} else {
+ 		do {
+ 			current_signals = target_proc->cpu_signal;
++			if ((current_signals & SIGPdisabled) == SIGPdisabled && current_proc != target_proc && sheng_sigp_recover(target_proc)) {
++				current_signals = target_proc->cpu_signal;
++			}
+ 			if ((current_signals & SIGPdisabled) == SIGPdisabled) {
+ 				if (current_proc == target_proc) {
+ 					panic("cpu_signal of self while signals are disabled");
+@@ -921,7 +942,8 @@
+ {
+ 	if (enabled) {
+ 		assert((getCpuDatap()->cpu_signal & SIGPdisabled) == 0);
+-	} else {
++	} else if (os_atomic_load(&sheng_sigp_recovered, relaxed) == 0) {
++		/* sheng (UniXNU): sheng_sigp_recover can enable a core that is on its way here, and a signal may then be pending. */
+ 		assert3u(getCpuDatap()->cpu_signal, ==, SIGPdisabled);
+ 	}
+ }
+diff --color -ru a/osfmk/arm64/cpu.c b/osfmk/arm64/cpu.c
+--- a/osfmk/arm64/cpu.c	2026-11-19 04:09:01.663529850 -0300
++++ b/osfmk/arm64/cpu.c	2026-11-19 04:09:01.674079703 -0300
+@@ -139,12 +139,17 @@
+  * loop. The default.
+  */
+ uint32_t idle_proximate_io_wfe_unmasked = 1;
++/* sheng (UniXNU): off Apple silicon the cores belong to a hypervisor that traps WFI and blocks the vCPU but may run WFE in the guest,
++ * so a core awaiting a proximate timer in WFE keeps its physical core awake. Await it in WFI there. */
++/* Measured on the board (2026-10-28): with WFI in the idle path every core went to sleep and nothing woke the system again (boot stalled
++ * 30 s after the data disk started), so the stock WFE polling stays. */
++#define IDLE_PROXIMATE_TIMER_WFE 1
+ #if DEVELOPMENT || DEBUG
+-uint32_t idle_proximate_timer_wfe = 1;
++uint32_t idle_proximate_timer_wfe = IDLE_PROXIMATE_TIMER_WFE;
+ uint32_t idle_proximate_io_wfe_masked = 0;
+ #else
+ /* Issue WFE in lieu of WFI when awaiting a proximate timer. */
+-static uint32_t idle_proximate_timer_wfe = 1;
++static uint32_t idle_proximate_timer_wfe = IDLE_PROXIMATE_TIMER_WFE;
+ /* When recommended, issue WFE with [FI]IRQ masked in the idle loop.
+  * Non-default, retained for experimentation.
+  */
+@@ -379,7 +384,7 @@
+ 	return !SetIdlePop();
+ }
+ 
+-#ifdef ARM64_BOARD_CONFIG_T6000
++#if defined(ARM64_BOARD_CONFIG_T6000)
+ int wfe_allowed = 0;
+ #else
+ int wfe_allowed = 1;
+@@ -477,6 +482,9 @@
+  *	Routine:	cpu_idle
+  *	Function:
+  */
++extern bool sheng_sigp_recover(cpu_data_t *target_proc);
++volatile uint32_t sheng_idle_sigp_cleared, sheng_idle_sigp_refused, sheng_idle_enter[8], sheng_idle_disallowed[8];
++
+ void __attribute__((noreturn))
+ cpu_idle(void)
+ {
+@@ -488,10 +496,20 @@
+ 	if (__improbable((!idle_enable))) {
+ 		idle_disallowed = true;
+ 	} else if (__improbable(cpu_data_ptr->cpu_signal & SIGPdisabled)) {
+-		idle_disallowed = true;
++		/* sheng (UniXNU): SIGPdisabled leaves a core only when it takes an IPI, and an idle core is never signalled, so a core that
++		 * missed its start-up self-IPI kept this flag and spun in the idle thread at full speed (every cluster read busy=100% on the
++		 * idle desktop). A started core takes interrupts: clear the flag here instead of refusing to idle. */
++		if (sheng_sigp_recover(cpu_data_ptr)) {
++			sheng_idle_sigp_cleared++;
++		} else {
++			sheng_idle_sigp_refused++;
++			idle_disallowed = true;
++		}
+ 	}
+ 
++	sheng_idle_enter[cpu_data_ptr->cpu_number & 7]++;
+ 	if (__improbable(idle_disallowed)) {
++		sheng_idle_disallowed[cpu_data_ptr->cpu_number & 7]++;
+ 		Idle_load_context();
+ 	}
+ 
+@@ -843,8 +861,10 @@
+ 	pmap_cpu_data_ptr->pv_free_spill_marker = NULL;
+ #if !CONFIG_SPTM
+ 	pmap_cpu_data_ptr->cpu_nested_pmap = (struct pmap *) NULL;
++#if !HAS_16BIT_ASID
+ 	bzero(&(pmap_cpu_data_ptr->cpu_sw_asids[0]), sizeof(pmap_cpu_data_ptr->cpu_sw_asids));
+ #endif
++#endif
+ #endif /* !XNU_MONITOR */
+ 	cpu_data_ptr->halt_status = CPU_NOT_HALTED;
+ #if __ARM_KERNEL_PROTECT__
+@@ -934,6 +954,18 @@
+ 
+ 		flush_dcache((vm_offset_t)&CpuDataEntries[cpu], sizeof(cpu_data_entry_t), FALSE);
+ 		flush_dcache((vm_offset_t)cpu_data_ptr, sizeof(cpu_data_t), FALSE);
++#if !defined(APPLE_ARM64_ARCH_FAMILY)
++		{
++			/* UniXNU: the new core reads these with its MMU off, uncached, from DRAM (reset_vector, start_cpu, common_start):
++			 * written once at boot, they can still be dirty in this core's caches, and a core that reads a stale
++			 * ResetHandlerData, const_boot_args or cpu_ttep finds no cpu data or builds a wrong address space and spins in the
++			 * early vectors. Write them back to the point of coherency, as the cpu data above. */
++			extern boot_args const_boot_args;
++			flush_dcache((vm_offset_t)&ResetHandlerData, sizeof(ResetHandlerData), FALSE);
++			flush_dcache((vm_offset_t)&const_boot_args, sizeof(const_boot_args), FALSE);
++			flush_dcache((vm_offset_t)&cpu_ttep, sizeof(cpu_ttep), FALSE);
++		}
++#endif
+ #if CONFIG_SPTM
+ 		/**
+ 		 * On SPTM devices, CTRR is configured entirely by the SPTM. Due to this, this logic
